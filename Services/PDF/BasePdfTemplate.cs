@@ -1,14 +1,13 @@
 using QuestPDF.Fluent;
-using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace CAT.AID.Web.Services.PDF
 {
     public abstract class BasePdfTemplate : IDocument
     {
-        protected string Title;
-        protected string LogoLeft;
-        protected string LogoRight;
+        protected string Title { get; }
+        protected string LogoLeft { get; }
+        protected string LogoRight { get; }
 
         protected BasePdfTemplate(string title, string logoLeft, string logoRight)
         {
@@ -25,38 +24,26 @@ namespace CAT.AID.Web.Services.PDF
             {
                 page.Margin(30);
 
-                page.Header().Element(BuildHeader);
+                page.Header().Element(ComposeHeader);
                 page.Content().Element(ComposeContent);
-                page.Footer().Element(BuildFooter);
+                page.Footer().AlignCenter().Text(x =>
+                {
+                    x.Span("Generated on ");
+                    x.Span(DateTime.Now.ToString("dd-MMM-yyyy HH:mm"));
+                });
             });
         }
 
         protected abstract void ComposeContent(IContainer container);
 
-        private void BuildHeader(IContainer container)
+        protected virtual void ComposeHeader(IContainer container)
         {
             container.Row(row =>
             {
-                if (File.Exists(LogoLeft))
-                    row.RelativeItem(1).Image(LogoLeft).FitHeight(60);
-
-                row.RelativeItem(3).AlignCenter().Text(Title)
-                    .FontSize(18).Bold();
-
-                if (File.Exists(LogoRight))
-                    row.RelativeItem(1).AlignRight().Image(LogoRight).FitHeight(60);
+                row.RelativeItem().Height(50).Image(LogoLeft);
+                row.RelativeItem().AlignCenter().Text(Title).FontSize(18).Bold();
+                row.RelativeItem().Height(50).AlignRight().Image(LogoRight);
             });
-        }
-
-        private void BuildFooter(IContainer container)
-        {
-            container.AlignCenter().Text(text =>
-            {
-                text.Span("Generated on ");
-                text.Span(DateTime.Now.ToString("dd-MMM-yyyy")).SemiBold();
-            })
-            .FontSize(9)
-            .FontColor(Colors.Grey.Medium);
         }
     }
 }
