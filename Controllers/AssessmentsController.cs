@@ -2,7 +2,6 @@ using CAT.AID.Models;
 using CAT.AID.Models.DTO;
 using CAT.AID.Web.Data;
 using CAT.AID.Web.Models;
-using CAT.AID.Web.Models.DTO;
 using CAT.AID.Web.Services.PDF;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -505,6 +504,7 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
+
 
 
 
