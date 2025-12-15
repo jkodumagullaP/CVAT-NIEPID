@@ -124,12 +124,14 @@ public async Task<IActionResult> AssignAssessment(
     var assessor = await _db.Users.FindAsync(assessorId);
 
     await _notificationService.NotifyAssessorAssignment(
-        assessor!,
-        assessment,
-        date,
-        from,
-        to
-    );
+    assessor,
+    assessment,
+    date.ToDateTime(TimeOnly.MinValue),
+    fromTime,
+    toTime
+);
+
+
 
     return RedirectToAction("ReviewQueue");
 }
@@ -568,6 +570,7 @@ public async Task<IActionResult> AssignAssessment(
         }
     }
 }
+
 
 
 
