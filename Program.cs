@@ -10,25 +10,13 @@ var builder = WebApplication.CreateBuilder(args);
 // QuestPDF
 QuestPDF.Settings.License = LicenseType.Community;
 
-// EPPlus
-ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-// -------------------------------------------------------------------
-// ✅ Render requires ENV variable override for connection string
-// -------------------------------------------------------------------
-var connectionString =
-    Environment.GetEnvironmentVariable("DefaultConnection")
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+// EPPlus (Excel)
+ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
 
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.AccessDeniedPath = "/Account/AccessDenied";
-});
-
-
+// DB
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -45,41 +33,35 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
 
+// Cookies
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
 var app = builder.Build();
 
-// -------------------------------------------------------------------
-// ✅ Auto-run migrations on Render (important!)
-// -------------------------------------------------------------------
+// Seed roles and users
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var services = scope.ServiceProvider;
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     await SeedData.InitializeAsync(userManager, roleManager);
 }
 
-// -------------------------------------------------------------------
-// ❌ Disable HTTPS redirection for Render
-// -------------------------------------------------------------------
-if (app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// MVC
+app.MapRazorPages();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
-
-// Razor Pages
-app.MapRazorPages();
 
 app.Run();
