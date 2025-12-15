@@ -1,0 +1,175 @@
+@model CAT.AID.Models.Assessment
+@{
+    ViewData["Title"] = "Assign Assessor";
+}
+
+<style>
+    body {
+        background: #f6f6f4;
+    }
+
+    .assign-card {
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        padding: 30px;
+        border-top: 6px solid #003366; /* Navy */
+    }
+
+    .section-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #3c2d03; /* Brown */
+        border-bottom: 2px solid #e0d8c8;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: 600;
+        color: #003366;
+    }
+
+    .info-box {
+        background: #f3efe8;
+        border-left: 5px solid #6f4e07;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .btn-primary {
+        background: #003366;
+        border: none;
+        font-weight: 600;
+    }
+
+    .btn-primary:hover {
+        background: #002244;
+    }
+
+    .slot-box {
+        background: #f9f7f3;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+    }
+
+    .assessor-list {
+        margin-top: 15px;
+    }
+
+    .assessor-item {
+        background: #ffffff;
+        border: 1px solid #d8d1c2;
+        border-radius: 10px;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .badge-available {
+        background: #6f4e07;
+        color: white;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 13px;
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+
+    <div class="assign-card">
+
+        <!-- HEADER -->
+        <div class="section-title">
+            🧩 Assign Assessment to Assessor
+        </div>
+
+        <!-- CANDIDATE INFO -->
+        <div class="info-box">
+            <strong>Candidate:</strong> @Model.Candidate.FullName <br />
+            <strong>Assessment ID:</strong> @Model.Id <br />
+            <strong>Status:</strong> @Model.Status
+        </div>
+
+        <!-- ASSIGN FORM -->
+        <form method="post" asp-action="AssignAssessment" asp-controller="Assessments">
+
+            <input type="hidden" name="assessmentId" value="@Model.Id" />
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label>Select Date</label>
+                    <input type="date" class="form-control" id="date" name="date" required />
+                </div>
+
+                <div class="col-md-4">
+                    <label>From Time</label>
+                    <input type="time" class="form-control" id="from" name="from" required />
+                </div>
+
+                <div class="col-md-4">
+                    <label>To Time</label>
+                    <input type="time" class="form-control" id="to" name="to" required />
+                </div>
+            </div>
+
+            <div class="slot-box">
+                <button type="button" class="btn btn-primary" onclick="loadAssessors()">
+                    🔍 Check Available Assessors
+                </button>
+
+                <div id="assessorContainer" class="assessor-list"></div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    function loadAssessors() {
+
+        const date = document.getElementById("date").value;
+        const from = document.getElementById("from").value;
+        const to = document.getElementById("to").value;
+
+        if (!date || !from || !to) {
+            alert("Please select date and time slot.");
+            return;
+        }
+
+        fetch(`/Availability/GetAvailableAssessors?date=${date}&from=${from}&to=${to}`)
+            .then(res => res.json())
+            .then(data => {
+
+                let html = "";
+
+                if (data.length === 0) {
+                    html = `<div class="text-muted mt-3">No assessors available for selected slot.</div>`;
+                } else {
+                    data.forEach(a => {
+                        html += `
+                        <div class="assessor-item">
+                            <div>
+                                <strong>${a.fullName}</strong>
+                            </div>
+                            <div>
+                                <span class="badge-available">Available</span>
+                                <button type="submit"
+                                    class="btn btn-sm btn-primary ms-2"
+                                    name="assessorId"
+                                    value="${a.assessorId}">
+                                    Assign
+                                </button>
+                            </div>
+                        </div>`;
+                    });
+                }
+
+                document.getElementById("assessorContainer").innerHTML = html;
+            });
+    }
+</script>
