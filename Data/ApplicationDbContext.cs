@@ -44,7 +44,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(a => a.LeadAssessorId)
             .OnDelete(DeleteBehavior.Restrict);
     }
-    public DbSet<AssessmentSection> AssessmentSections { get; set; }
 
 }
+
 
