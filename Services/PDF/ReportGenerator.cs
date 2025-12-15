@@ -72,7 +72,7 @@ namespace CAT.AID.Web.Services.PDF
         }
 
         // ============================================================================
-        public override void ComposeContent(IContainer container)
+protected override void ComposeContent(IContainer container)
         {
             container.Column(col =>
             {
@@ -171,6 +171,7 @@ namespace CAT.AID.Web.Services.PDF
                         table.Cell().Text(sec.Category);
                         table.Cell().AlignCenter().Text(scr.ToString("0")); // or "0.0" if you want decimals
                         table.Cell().AlignCenter().Text(max.ToString());
+
                     }
 
                 });
