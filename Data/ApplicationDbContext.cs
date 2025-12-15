@@ -1,6 +1,6 @@
-﻿using CAT.AID.Models;
-using CAT.AID.Web.Models;
+using CAT.AID.Models;
 using CAT.AID.Models.DTO;
+using CAT.AID.Web.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,9 +28,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     // 🔴 IGNORE DTOs (CRITICAL)
     builder.Ignore<AssessmentSection>();
-    builder.Ignore<AssessmentQuestion>();
+        builder.Ignore<CAT.AID.Models.DTO.AssessmentQuestion>();
 
-    builder.Entity<Assessment>()
+        builder.Entity<Assessment>()
         .Property(a => a.Status)
         .HasConversion<int>();
 
