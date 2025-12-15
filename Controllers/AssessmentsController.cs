@@ -288,16 +288,7 @@ foreach (var q in section.Questions)
             return File(pdf, "application/pdf", $"Assessment_{a.Id}.pdf");
         }
 
-        [Authorize]
-        public async Task<IActionResult> ExportExcel(int id)
-        {
-            var a = await _db.Assessments.Include(x => x.Candidate).FirstOrDefaultAsync(x => x.Id == id);
-            if (a == null) return NotFound();
-            var file = ExcelGenerator.BuildScoreSheet(a);
-            return File(file, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Scores_{a.Id}.xlsx");
-        }
-
-
+       
 
         [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
         public async Task<IActionResult> View(int id)
@@ -513,6 +504,7 @@ foreach (var q in section.Questions)
         }
     }
 }
+
 
 
 
