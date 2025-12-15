@@ -30,6 +30,13 @@ namespace CAT.AID.Web.Controllers
             _user = user;
             _environment = env;
         }
+await _notificationService.NotifyAssessorAssignment(
+    assessor,
+    assessment,
+    date,
+    fromTime,
+    toTime
+);
 
         // -------------------- 1. TASKS FOR ASSESSOR --------------------
         [Authorize(Roles = "LeadAssessor, Assessor")]
@@ -545,5 +552,6 @@ public async Task<IActionResult> AssignAssessment(
         }
     }
 }
+
 
 
