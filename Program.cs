@@ -12,6 +12,9 @@ QuestPDF.Settings.License = LicenseType.Community;
 
 // EPPlus (Excel)
 ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ISmsService, SmsService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 
 // DB
@@ -65,3 +68,4 @@ app.MapControllerRoute(
 );
 
 app.Run();
+
