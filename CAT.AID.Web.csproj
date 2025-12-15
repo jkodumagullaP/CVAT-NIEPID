@@ -34,13 +34,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
   </ItemGroup>
 
-  <!-- ✅ ENSURE STATIC FILES ARE PUBLISHED -->
-  <ItemGroup>
-    <Content Include="wwwroot\**\*">
-      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
-
   <ItemGroup>
     <Folder Include="Migrations/" />
     <Folder Include="wwwroot/uploads/assessments/" />
