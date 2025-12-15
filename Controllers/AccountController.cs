@@ -1,4 +1,5 @@
 using CAT.AID.Models.DTO;
+using CAT.AID.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +40,6 @@ namespace CAT.AID.Web.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Check if user exists
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
@@ -47,9 +47,8 @@ namespace CAT.AID.Web.Controllers
                 return View(model);
             }
 
-            // Password Sign-in
             var result = await _signInManager.PasswordSignInAsync(
-                user.UserName,                // Identity signs in using username internally
+                user.UserName!,   // safe: Identity requires username
                 model.Password,
                 model.RememberMe,
                 lockoutOnFailure: false
@@ -74,7 +73,7 @@ namespace CAT.AID.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("", "");
+            return RedirectToAction("Login", "Account");
         }
 
         // 🔓 FORGOT PASSWORD PAGE
@@ -86,4 +85,3 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
-
