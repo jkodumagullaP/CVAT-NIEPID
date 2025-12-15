@@ -9,8 +9,8 @@ namespace CAT.AID.Web.Services.Excel
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            using var pkg = new ExcelPackage();
-            var ws = pkg.Workbook.Worksheets.Add("Scores");
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Scores");
 
             ws.Cells[1, 1].Value = "Assessment ID";
             ws.Cells[1, 2].Value = assessment.Id;
@@ -21,7 +21,7 @@ namespace CAT.AID.Web.Services.Excel
             ws.Cells[3, 1].Value = "Status";
             ws.Cells[3, 2].Value = assessment.Status.ToString();
 
-            return pkg.GetAsByteArray();
+            return package.GetAsByteArray();
         }
     }
 }
