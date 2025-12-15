@@ -2,7 +2,7 @@ using CAT.AID.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
 
-namespace CAT.AID.Web.Services.Reports
+namespace CAT.AID.Web.Services.PDF
 {
     public static class ProgressReportGenerator
     {
