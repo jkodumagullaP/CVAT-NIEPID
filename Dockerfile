@@ -4,14 +4,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy csproj first (cache-friendly)
 COPY CAT.AID.Web.csproj ./
 RUN dotnet restore --disable-parallel
 
-# Copy remaining source
 COPY . ./
-
-# ✅ Publish ONLY the web project (not solution)
 RUN dotnet publish CAT.AID.Web.csproj -c Release -o /app/publish --no-restore
 
 
@@ -35,8 +31,8 @@ RUN mkdir -p /app/wwwroot/Images \
     /app/wwwroot/data \
     /app/wwwroot/uploads
 
-# Render-compatible port
 ENV ASPNETCORE_URLS=http://+:8080
-EXPOSE 8080
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "CAT.AID.Web.dll"]
