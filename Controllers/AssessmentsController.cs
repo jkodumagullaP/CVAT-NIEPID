@@ -211,7 +211,11 @@ namespace CAT.AID.Web.Controllers
             if (a == null) return NotFound();
 
             // Load Sections from DB
-            var sections = _db.AssessmentSections.ToList();
+var sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
+    System.IO.File.ReadAllText(
+        Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json")
+    )
+) ?? new List<AssessmentSection>();
 
             // Load Score JSON
             var score = JsonSerializer.Deserialize<AssessmentScoreDTO>(a.ScoreJson);
@@ -244,16 +248,21 @@ namespace CAT.AID.Web.Controllers
                 }
 
                 // Weak question breakdown
-                var weakList = new List<(string Question, int Score)>();
-                foreach (var q in sections.First(s => s.Category == sec.Key).Questions)
-                {
-                    var saved = JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentResultJson);
-                    saved.TryGetValue($"SCORE_{q.Id}", out string scr);
-                    int sc = int.TryParse(scr, out int x) ? x : 0;
+               var section = sections.FirstOrDefault(s => s.Category == sec.Key);
+if (section == null) continue;
 
-                    if (sc < 3)  // <3 means not fully achieved
-                        weakList.Add((q.Text, sc));
-                }
+foreach (var q in section.Questions)
+{
+    var saved = JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentResultJson)
+                ?? new Dictionary<string, string>();
+
+    saved.TryGetValue($"SCORE_{q.Id}", out string scr);
+    int sc = int.TryParse(scr, out int x) ? x : 0;
+
+    if (sc < 3)
+        weakList.Add((q.Text, sc));
+}
+
 
                 if (weakList.Any())
                     weakDetails[sec.Key] = weakList;
@@ -504,6 +513,7 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
+
 
 
 
