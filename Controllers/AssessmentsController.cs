@@ -77,6 +77,40 @@ namespace CAT.AID.Web.Controllers
             ViewBag.Timestamps = timestamps;
             return View(grouped);
         }
+        [Authorize(Roles = "LeadAssessor")]
+[HttpPost]
+public async Task<IActionResult> AssignAssessment(
+    int assessmentId,
+    string assessorId,
+    DateOnly date,
+    TimeSpan from,
+    TimeSpan to)
+{
+    var assessment = await _db.Assessments.FindAsync(assessmentId);
+    if (assessment == null) return NotFound();
+
+    var slot = await _db.AssessorAvailabilities.FirstOrDefaultAsync(a =>
+        a.AssessorId == assessorId &&
+        a.Date == date &&
+        a.SlotFrom <= from &&
+        a.SlotTo >= to &&
+        !a.IsBooked);
+
+    if (slot == null)
+        return BadRequest("Slot not available");
+
+    assessment.AssessorId = assessorId;
+    assessment.ScheduledDate = date;
+    assessment.ScheduledFrom = from;
+    assessment.ScheduledTo = to;
+    assessment.Status = AssessmentStatus.Assigned;
+
+    slot.IsBooked = true;
+
+    await _db.SaveChangesAsync();
+    return RedirectToAction("ReviewQueue");
+}
+
         [Authorize(Roles = "Assessor, Lead, Admin")]
         [HttpGet]
         public async Task<IActionResult> Compare(int candidateId, int[] ids)
@@ -511,4 +545,5 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
+
 
