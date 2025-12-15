@@ -84,7 +84,7 @@ namespace CAT.AID.Web.Services.PDF
         }
 
         // MAIN CONTENT --------------------------------------------------------
-        public override void ComposeContent(IContainer container)
+protected override void ComposeContent(IContainer container)
         {
             container.Column(col =>
             {
@@ -294,4 +294,5 @@ private void SignatureBlock(IContainer container)
 
     }
 }
+
 
