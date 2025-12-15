@@ -23,21 +23,13 @@ namespace CAT.AID.Web.Controllers
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _user;
         private readonly IWebHostEnvironment _environment;
-private readonly INotificationService _notificationService;
 
-       public AssessmentsController(
-    ApplicationDbContext db,
-    UserManager<ApplicationUser> user,
-    IWebHostEnvironment env,
-    INotificationService notificationService)
-{
-    _db = db;
-    _user = user;
-    _environment = env;
-    _notificationService = notificationService;
-}
-
-
+        public AssessmentsController(ApplicationDbContext db, UserManager<ApplicationUser> user, IWebHostEnvironment env)
+        {
+            _db = db;
+            _user = user;
+            _environment = env;
+        }
 
         // -------------------- 1. TASKS FOR ASSESSOR --------------------
         [Authorize(Roles = "LeadAssessor, Assessor")]
@@ -48,7 +40,7 @@ private readonly INotificationService _notificationService;
 
             var tasks = await _db.Assessments
                 .Include(a => a.Candidate)
-                .Where(a => a.AssessorId != null && a.AssessorId == uid)
+                .Where(a => a.AssessorId == uid)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
 
@@ -85,57 +77,6 @@ private readonly INotificationService _notificationService;
             ViewBag.Timestamps = timestamps;
             return View(grouped);
         }
-[Authorize(Roles = "LeadAssessor")]
-[HttpPost]
-public async Task<IActionResult> AssignAssessment(
-    int assessmentId,
-    string assessorId,
-    DateOnly date,
-    TimeSpan from,
-    TimeSpan to)
-{
-    var assessment = await _db.Assessments
-        .Include(a => a.Candidate)
-        .FirstOrDefaultAsync(a => a.Id == assessmentId);
-
-    if (assessment == null) return NotFound();
-
-    var slot = await _db.AssessorAvailabilities.FirstOrDefaultAsync(a =>
-        a.AssessorId == assessorId &&
-        a.Date == date &&
-        a.SlotFrom <= from &&
-        a.SlotTo >= to &&
-        !a.IsBooked);
-
-    if (slot == null)
-        return BadRequest("Slot not available");
-
-    assessment.AssessorId = assessorId;
-    assessment.ScheduledDate = date;
-    assessment.ScheduledFrom = from;
-    assessment.ScheduledTo = to;
-    assessment.Status = AssessmentStatus.Assigned;
-
-    slot.IsBooked = true;
-
-    await _db.SaveChangesAsync();
-
-    // ✅ CORRECT PLACE FOR await
-    var assessor = await _db.Users.FindAsync(assessorId);
-
-    await _notificationService.NotifyAssessorAssignment(
-    assessor,
-    assessment,
-    date.ToDateTime(TimeOnly.MinValue),
-    fromTime,
-    toTime
-);
-
-
-
-    return RedirectToAction("ReviewQueue");
-}
-
         [Authorize(Roles = "Assessor, Lead, Admin")]
         [HttpGet]
         public async Task<IActionResult> Compare(int candidateId, int[] ids)
@@ -570,8 +511,3 @@ public async Task<IActionResult> AssignAssessment(
         }
     }
 }
-
-
-
-
-
