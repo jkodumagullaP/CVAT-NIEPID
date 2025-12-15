@@ -21,30 +21,33 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ComparisonEvidence> ComparisonEvidences { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
-    {
-        base.OnModelCreating(builder);
+{
+    base.OnModelCreating(builder);
 
-        builder.HasDefaultSchema("public");
+    builder.HasDefaultSchema("public");
 
-        // Enum → int mapping
-        builder.Entity<Assessment>()
-            .Property(a => a.Status)
-            .HasConversion<int>();
+    // 🔴 IGNORE DTOs (CRITICAL)
+    builder.Ignore<AssessmentSection>();
+    builder.Ignore<AssessmentQuestion>();
 
-        // ⬇ Ensure FK AssessorId & LeadAssessorId remain string (GUID)
-        builder.Entity<Assessment>()
-            .HasOne<ApplicationUser>()
-            .WithMany()
-            .HasForeignKey(a => a.AssessorId)
-            .OnDelete(DeleteBehavior.Restrict);
+    builder.Entity<Assessment>()
+        .Property(a => a.Status)
+        .HasConversion<int>();
 
-        builder.Entity<Assessment>()
-            .HasOne<ApplicationUser>()
-            .WithMany()
-            .HasForeignKey(a => a.LeadAssessorId)
-            .OnDelete(DeleteBehavior.Restrict);
-    }
+    builder.Entity<Assessment>()
+        .HasOne<ApplicationUser>()
+        .WithMany()
+        .HasForeignKey(a => a.AssessorId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    builder.Entity<Assessment>()
+        .HasOne<ApplicationUser>()
+        .WithMany()
+        .HasForeignKey(a => a.LeadAssessorId)
+        .OnDelete(DeleteBehavior.Restrict);
+}
 
 }
+
 
 
