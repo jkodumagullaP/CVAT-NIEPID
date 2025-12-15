@@ -8,25 +8,28 @@ namespace CAT.AID.Web.Services.PDF
     {
         // USED BY ProgressReport()
         public static byte[] GeneratePdf(Candidate candidate, List<Assessment> history)
+{
+    candidate ??= new Candidate { FullName = "Unknown" };
+    history ??= new List<Assessment>();
+
+    return Document.Create(container =>
+    {
+        container.Page(page =>
         {
-            return Document.Create(container =>
+            page.Margin(30);
+
+            page.Content().Column(col =>
             {
-                container.Page(page =>
-                {
-                    page.Margin(30);
+                col.Item().Text("Candidate Progress Report")
+                    .FontSize(18)
+                    .Bold();
 
-                    page.Content().Column(col =>
-                    {
-                        col.Item().Text("Candidate Progress Report")
-                            .FontSize(18)
-                            .Bold();
-
-                        col.Item().Text($"Name: {candidate.FullName}");
-                        col.Item().Text($"Total Assessments: {history.Count}");
-                    });
-                });
-            }).GeneratePdf();
-        }
+                col.Item().Text($"Name: {candidate.FullName}");
+                col.Item().Text($"Total Assessments: {history.Count}");
+            });
+        });
+    }).GeneratePdf();
+}
 
         // USED BY ExportProgress()
         public static byte[] Build(Candidate candidate, List<Assessment> assessments)
