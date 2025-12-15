@@ -33,11 +33,6 @@
     <!-- Logging -->
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
   </ItemGroup>
-<ItemGroup>
-  <Content Include="wwwroot\**\*">
-    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-  </Content>
-</ItemGroup>
 
   <ItemGroup>
     <Folder Include="Migrations/" />
@@ -45,4 +40,3 @@
   </ItemGroup>
 
 </Project>
-
