@@ -1,5 +1,6 @@
 using CAT.AID.Web.Data;
 using CAT.AID.Web.Models;
+using CAT.AID.Web.Services.Notifications;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
