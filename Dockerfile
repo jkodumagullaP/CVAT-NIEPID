@@ -4,10 +4,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY CAT.AID.Web.csproj .
-RUN dotnet restore
+# Copy csproj first (cache-friendly)
+COPY CAT.AID.Web.csproj ./
+RUN dotnet restore --disable-parallel
 
-COPY . .
+# Copy everything else
+COPY . ./
+
+# Publish
 RUN dotnet publish -c Release -o /app/publish
 
 
@@ -17,14 +21,19 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Install fonts for QuestPDF
+# Fonts for QuestPDF
 RUN apt-get update && apt-get install -y \
     fontconfig \
     fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy output
-COPY --from=build /app/publish .
+# Copy published output
+COPY --from=build /app/publish ./
+
+# Ensure folders exist
+RUN mkdir -p /app/wwwroot/Images \
+    /app/wwwroot/data \
+    /app/wwwroot/uploads
 
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
