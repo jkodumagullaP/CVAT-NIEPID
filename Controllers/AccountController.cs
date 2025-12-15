@@ -73,7 +73,7 @@ namespace CAT.AID.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("Login", "Account");
+            return RedirectToAction("", "");
         }
 
         // 🔓 FORGOT PASSWORD PAGE
@@ -85,3 +85,4 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
+
