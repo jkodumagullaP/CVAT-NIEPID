@@ -5,7 +5,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>NU1701</NoWarn>
-    <OutputType>Exe</OutputType>
     <UserSecretsId>ca9ad2ab-fbe6-45cc-9582-609746ea0f85</UserSecretsId>
   </PropertyGroup>
 
@@ -14,19 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-
-    <!-- PDF Generation -->
+    <!-- PDF -->
     <PackageReference Include="QuestPDF" Version="2025.7.4" />
-    <PackageReference Include="DinkToPdf" Version="1.0.8" />
-    <PackageReference Include="iTextSharp" Version="5.5.13.4" />
-    <PackageReference Include="iTextSharp.xmlworker" Version="5.5.13.4" />
 
     <!-- Excel -->
-    <!-- Upgraded because 7.2.5 DOES NOT EXIST on NuGet (Docker restore warning) -->
     <PackageReference Include="EPPlus" Version="7.3.0" />
-    <PackageReference Include="EPPlus.Interfaces" Version="8.1.0" />
 
-    <!-- Entity Framework Core + Identity -->
+    <!-- EF Core + Identity -->
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.2">
@@ -34,22 +27,22 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.2" />
 
-    <!-- PostgreSQL Provider -->
-    <!-- Upgraded to the version NuGet resolves during Docker build -->
+    <!-- PostgreSQL -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
 
     <!-- Logging -->
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+  </ItemGroup>
 
-    <!-- Utilities -->
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
-
+  <!-- ✅ ENSURE STATIC FILES ARE PUBLISHED -->
+  <ItemGroup>
+    <Content Include="wwwroot\**\*">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Migrations/" />
-    <Folder Include="wwwroot/wkhtmltox/" />
     <Folder Include="wwwroot/uploads/assessments/" />
   </ItemGroup>
 
