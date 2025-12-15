@@ -17,10 +17,9 @@ namespace CAT.AID.Web.Controllers
             _userManager = userManager;
         }
 
-        // Default route → redirect to assessment dashboard
         public IActionResult Index()
         {
-            return RedirectToAction("MyTasks", "Assessments");
+            return View();
         }
 
         public IActionResult Privacy()
@@ -28,7 +27,8 @@ namespace CAT.AID.Web.Controllers
             return View();
         }
 
-        // Temporary admin repair tool
+        // 🚀 Temporary method only to fix login
+       
         public async Task<IActionResult> FixAdmin()
         {
             var admin = await _userManager.FindByEmailAsync("admin@aid.com");
@@ -47,10 +47,7 @@ namespace CAT.AID.Web.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel 
-            { 
-                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier 
-            });
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }
