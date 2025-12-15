@@ -25,7 +25,7 @@ public class QuestionBankController : Controller
     {
         var all = JsonSerializer.Deserialize<List<AssessmentSection>>(System.IO.File.ReadAllText(FilePath));
 
-        AssessmentQuestion q = null;
+        CAT.AID.Models.DTO.AssessmentQuestion  q = null;
         string section = "";
         if (id.HasValue)
         {
@@ -33,12 +33,12 @@ public class QuestionBankController : Controller
             section = all.FirstOrDefault(s => s.Questions.Any(x => x.Id == id))?.Category ?? "";
         }
 
-        return View((section, q ?? new AssessmentQuestion(), all));
+        return View((section, q ?? new CAT.AID.Models.DTO.AssessmentQuestion(), all));
     }
 
     // -------- ADD / EDIT (POST) --------
     [HttpPost]
-    public IActionResult Edit(string section, AssessmentQuestion q)
+    public IActionResult Edit(string section, CAT.AID.Models.DTO.AssessmentQuestion q)
     {
         var all = JsonSerializer.Deserialize<List<AssessmentSection>>(System.IO.File.ReadAllText(FilePath));
 
@@ -186,3 +186,4 @@ public class QuestionBankController : Controller
     }
 
 }
+
