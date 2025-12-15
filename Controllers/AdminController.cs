@@ -1,4 +1,5 @@
 using CAT.AID.Models.DTO;
+using CAT.AID.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -46,10 +47,9 @@ namespace CAT.AID.Web.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            model.UserName = model.Email; // Identity login consistency
+            model.UserName = model.Email;
 
             var result = await _userManager.CreateAsync(model, password);
-
             if (!result.Succeeded)
             {
                 foreach (var err in result.Errors)
@@ -58,7 +58,10 @@ namespace CAT.AID.Web.Controllers
                 return View(model);
             }
 
-            await _userManager.AddToRoleAsync(model, role);
+            if (!string.IsNullOrWhiteSpace(role) && await _roleManager.RoleExistsAsync(role))
+            {
+                await _userManager.AddToRoleAsync(model, role);
+            }
 
             TempData["msg"] = "User created successfully!";
             return RedirectToAction(nameof(Users));
@@ -71,16 +74,14 @@ namespace CAT.AID.Web.Controllers
         public async Task<IActionResult> Edit(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-
             if (user == null)
                 return NotFound();
 
-            var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-            ViewBag.Role = role;
+            ViewBag.Roles = _roleManager.Roles.Select(r => r.Name).ToList();
+            ViewBag.Role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
 
             return View(user);
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -96,7 +97,6 @@ namespace CAT.AID.Web.Controllers
             user.Location = model.Location;
 
             var update = await _userManager.UpdateAsync(user);
-
             if (!update.Succeeded)
             {
                 foreach (var err in update.Errors)
@@ -106,10 +106,13 @@ namespace CAT.AID.Web.Controllers
                 return View(model);
             }
 
-            // Update role
             var existingRoles = await _userManager.GetRolesAsync(user);
             await _userManager.RemoveFromRolesAsync(user, existingRoles);
-            await _userManager.AddToRoleAsync(user, role);
+
+            if (!string.IsNullOrWhiteSpace(role) && await _roleManager.RoleExistsAsync(role))
+            {
+                await _userManager.AddToRoleAsync(user, role);
+            }
 
             TempData["msg"] = "User updated successfully!";
             return RedirectToAction(nameof(Users));
@@ -147,9 +150,15 @@ namespace CAT.AID.Web.Controllers
             if (user == null)
                 return NotFound();
 
-            // Prevent deleting main admins
-            var userRoles = await _userManager.GetRolesAsync(user);
-            if (userRoles.Contains("Admin"))
+            var currentUserId = _userManager.GetUserId(User);
+            if (user.Id == currentUserId)
+            {
+                TempData["msg"] = "You cannot delete your own account!";
+                return RedirectToAction(nameof(Users));
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Contains("Admin"))
             {
                 TempData["msg"] = "Admin user cannot be deleted!";
                 return RedirectToAction(nameof(Users));
@@ -162,7 +171,7 @@ namespace CAT.AID.Web.Controllers
         }
 
         // --------------------------------------------------------
-        // LOCK USER
+        // LOCK / UNLOCK
         // --------------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -179,16 +188,13 @@ namespace CAT.AID.Web.Controllers
                 return RedirectToAction(nameof(Users));
             }
 
-            user.LockoutEnd = DateTime.UtcNow.AddYears(50);
+            user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(50);
             await _userManager.UpdateAsync(user);
 
             TempData["msg"] = "User locked!";
             return RedirectToAction(nameof(Users));
         }
 
-        // --------------------------------------------------------
-        // UNLOCK USER
-        // --------------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Unlock(string id)
@@ -205,4 +211,3 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
-
