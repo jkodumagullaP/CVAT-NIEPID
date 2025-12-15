@@ -8,11 +8,11 @@ WORKDIR /src
 COPY CAT.AID.Web.csproj ./
 RUN dotnet restore --disable-parallel
 
-# Copy everything else
+# Copy remaining source
 COPY . ./
 
-# Publish
-RUN dotnet publish -c Release -o /app/publish
+# ✅ Publish ONLY the web project (not solution)
+RUN dotnet publish CAT.AID.Web.csproj -c Release -o /app/publish --no-restore
 
 
 # ============================
@@ -30,11 +30,12 @@ RUN apt-get update && apt-get install -y \
 # Copy published output
 COPY --from=build /app/publish ./
 
-# Ensure folders exist
+# Ensure runtime folders exist
 RUN mkdir -p /app/wwwroot/Images \
     /app/wwwroot/data \
     /app/wwwroot/uploads
 
+# Render-compatible port
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
