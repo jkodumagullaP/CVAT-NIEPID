@@ -17,16 +17,13 @@ RUN dotnet publish CAT.AID.Web.csproj -c Release -o /app/publish --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Fonts for QuestPDF
 RUN apt-get update && apt-get install -y \
     fontconfig \
     fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy published output
 COPY --from=build /app/publish ./
 
-# Ensure runtime folders exist
 RUN mkdir -p /app/wwwroot/Images \
     /app/wwwroot/data \
     /app/wwwroot/uploads
