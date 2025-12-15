@@ -1,5 +1,7 @@
 using CAT.AID.Models;
 using Microsoft.AspNetCore.Identity;
+using CAT.AID.Web.Models;
+using CAT.AID.Models;
 
 namespace CAT.AID.Web.Services.Notifications
 {
@@ -27,7 +29,7 @@ namespace CAT.AID.Web.Services.Notifications
         public async Task NotifyAssessorAssignment(
             ApplicationUser assessor,
             Assessment assessment,
-            DateTime date,
+            DateOnly date,
             TimeSpan from,
             TimeSpan to)
         {
@@ -52,6 +54,8 @@ Please login to CVAT for details.
 
             if (!string.IsNullOrEmpty(assessor.PhoneNumber))
                 await _sms.SendAsync(assessor.PhoneNumber, message);
+                            await Task.CompletedTask;
+
         }
     }
 }
