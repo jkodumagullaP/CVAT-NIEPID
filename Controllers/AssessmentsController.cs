@@ -235,6 +235,21 @@ namespace CAT.AID.Web.Controllers
 
             return View("ViewAssessment", a);
         }
+        // ---------------------------------------------------------
+        // 7. REVIEW QUEUE (LIST OF SUBMITTED ASSESSMENTS)
+        // ---------------------------------------------------------
+        [Authorize(Roles = "LeadAssessor, Admin")]
+        public async Task<IActionResult> ReviewQueue()
+        {
+            var list = await _db.Assessments
+                .Include(a => a.Candidate)
+                .Include(a => a.Assessor)
+                .Where(a => a.Status == AssessmentStatus.Submitted)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
+
+            return View(list);
+        }
 
         // ---------------------------------------------------------
         // 5. REVIEW PAGE
