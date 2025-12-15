@@ -19,7 +19,6 @@ namespace CAT.AID.Models   // <-- THIS WAS MISSING
     public TimeSpan? ScheduledFrom { get; set; }
     public TimeSpan? ScheduledTo { get; set; }
 
-    public AssessmentStatus Status { get; set; }
         // 🔹 Auto scoring results
         public string? ScoreJson { get; set; }
         public double? TotalScore { get; set; }
@@ -56,4 +55,5 @@ namespace CAT.AID.Models   // <-- THIS WAS MISSING
             Status == AssessmentStatus.SentBack;
     }
 }
+
 
