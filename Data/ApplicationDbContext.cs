@@ -4,6 +4,7 @@ using CAT.AID.Web.Models;
 using CAT.AID.Web.Models.DTO;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using CAT.AID.Web.Models.Availability;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
@@ -20,6 +21,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ComparisonMaster> ComparisonMasters { get; set; }
     public DbSet<ComparisonDetail> ComparisonDetails { get; set; }
     public DbSet<ComparisonEvidence> ComparisonEvidences { get; set; }
+public DbSet<AssessorAvailability> AssessorAvailabilities { get; set; }
+public DbSet<ReviewReassignmentLog> ReviewReassignmentLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -47,3 +50,4 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 
 }
+
