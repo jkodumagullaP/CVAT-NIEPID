@@ -40,7 +40,7 @@ namespace CAT.AID.Web.Controllers
 
             var tasks = await _db.Assessments
                 .Include(a => a.Candidate)
-                .Where(a => a.AssessorId == uid)
+                .Where(a => a.AssessorId != null && a.AssessorId == uid)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
 
@@ -511,3 +511,4 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
+
