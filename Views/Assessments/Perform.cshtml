@@ -43,11 +43,11 @@
         transition: 0.25s ease;
     }
 
-        .question-card:hover {
-            background: #ffffff;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-            transform: scale(1.01);
-        }
+    .question-card:hover {
+        background: #ffffff;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        transform: scale(1.01);
+    }
 
     .question-header {
         font-size: 16px;
@@ -73,9 +73,9 @@
         padding: 8px 20px;
     }
 
-        .btn-submit:hover {
-            background: #00224d;
-        }
+    .btn-submit:hover {
+        background: #00224d;
+    }
 
     /* ---------- Evidence Preview ---------- */
     .evidence-box {
@@ -85,23 +85,16 @@
         margin-right: 10px;
     }
 
-        .evidence-box img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-        }
+    .evidence-box img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+    }
 
     /* ---------- Animation ---------- */
     @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     /* ---------- Sticky Tabs ---------- */
@@ -123,6 +116,24 @@
     <div class="sticky-tabs mb-3">
         <ul class="nav nav-tabs">
 
+            @for (int i = 0; i < sections.Count; i++)
+            {
+                <li class="nav-item">
+                    <button class="nav-link @(i == 0 ? "active" : "")"
+                            data-bs-toggle="tab"
+                            data-bs-target="#tab-@i">
+                        @sections[i].Category
+                    </button>
+                </li>
+            }
+
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-summary">
+                    Summary
+                </button>
+            </li>
+
+        </ul>
     </div>
 
     <!-- ============================================================
@@ -147,8 +158,8 @@
                     var scrKey = $"SCORE_{qId}";
                     var cmtKey = $"CMT_{qId}";
                     var savedFiles = saved.Where(x => x.Key.StartsWith($"FILE_{qId}_"))
-                    .Select(x => x.Value)
-                    .ToList();
+                                          .Select(x => x.Value)
+                                          .ToList();
 
                     saved.TryGetValue(ansKey, out string savedAns);
                     saved.TryGetValue(scrKey, out string savedScore);
@@ -177,8 +188,8 @@
 
                         <!-- Comments -->
                         <textarea name="@cmtKey" rows="2" class="form-control mb-2"
-                          placeholder="Comments..."
-                          @(editable ? "" : "readonly")>@savedCmt</textarea>
+                                  placeholder="Comments..."
+                                  @(editable ? "" : "readonly")>@savedCmt</textarea>
 
                         <!-- Evidence Upload -->
                         <label class="fw-semibold">📎 Upload Evidence</label>
