@@ -63,6 +63,17 @@
                  class="border rounded"
                  style="width:140px;height:160px;object-fit:cover;" />
         </div>
+<div class="card mt-4">
+    <div class="card-header fw-bold">
+        📝 Overall Summary (Assessor)
+    </div>
+
+    <div class="card-body">
+        <textarea class="form-control" rows="4" readonly>
+@ViewBag.Summary
+        </textarea>
+    </div>
+</div>
 
         <div class="col-md-9">
             <table class="table table-bordered">
@@ -357,3 +368,4 @@
             document.getElementById("doughnutChart").toDataURL().split(",")[1];
     }, 1200);
 </script>
+
