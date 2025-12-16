@@ -32,50 +32,66 @@ namespace CAT.AID.Web.Controllers
         }
 
         // -------------------- 1. TASKS FOR ASSESSOR --------------------
-        [Authorize(Roles = "LeadAssessor, Assessor")]
-        public async Task<IActionResult> MyTasks()
+        [Authorize(Roles = "Assessor,LeadAssessor")]
+public async Task<IActionResult> MyTasks()
+{
+    var userId = _user.GetUserId(User);
+
+    IQueryable<Assessment> query = _db.Assessments
+        .Include(a => a.Candidate);
+
+    // Assessor sees only assigned tasks
+    if (User.IsInRole("Assessor"))
+    {
+        query = query.Where(a => a.AssessorId == userId);
+    }
+
+    // Lead assessor sees all assigned & submitted
+    if (User.IsInRole("LeadAssessor"))
+    {
+        query = query.Where(a =>
+            a.Status == AssessmentStatus.Assigned ||
+            a.Status == AssessmentStatus.Submitted);
+    }
+
+    var tasks = await query
+        .OrderByDescending(a => a.CreatedAt)
+        .ToListAsync();
+
+    if (!tasks.Any())
+        return View(new List<CandidateAssessmentPivotVM>());
+
+    var timestamps = tasks
+        .Select(a => a.CreatedAt)
+        .Distinct()
+        .OrderBy(t => t)
+        .ToList();
+
+    var grouped = tasks
+        .GroupBy(a => a.CandidateId)
+        .Select(g => new CandidateAssessmentPivotVM
         {
-            var uid = _user.GetUserId(User)!;
+            CandidateId = g.Key,
+            CandidateName = g.FirstOrDefault()?.Candidate?.FullName ?? "N/A",
 
-            var tasks = await _db.Assessments
-                .Include(a => a.Candidate)
-                .Where(a => a.AssessorId == uid)
-                .OrderByDescending(a => a.CreatedAt)
-                .ToListAsync();
+            AssessmentIds = timestamps.ToDictionary(
+                ts => ts,
+                ts => g.FirstOrDefault(a => a.CreatedAt == ts)?.Id
+            ),
 
-            if (!tasks.Any())
-                return View(new List<CandidateAssessmentPivotVM>());
+            StatusMapping = g
+                .Where(a => a != null)
+                .ToDictionary(
+                    a => a.Id,
+                    a => a.Status.ToString()
+                )
+        })
+        .ToList();
 
-            // ⬇ FIX — Use full timestamp (NOT Date)
-            var timestamps = tasks
-                .Select(a => a.CreatedAt) // FULL datetime
-                .Distinct()
-                .OrderBy(t => t)
-                .ToList();
+    ViewBag.Timestamps = timestamps;
+    return View(grouped);
+}
 
-            var grouped = tasks
-                .GroupBy(a => a.CandidateId)
-                .Select(g => new CandidateAssessmentPivotVM
-                {
-                    CandidateId = g.Key,
-                    CandidateName = g.First().Candidate.FullName,
-
-                    // Map each timestamp to assessment ID
-                    AssessmentIds = timestamps.ToDictionary(
-                        ts => ts,
-                        ts => g.FirstOrDefault(a => a.CreatedAt == ts)?.Id
-                    ),
-
-                    StatusMapping = g.ToDictionary(
-                        a => a.Id,
-                        a => a.Status.ToString()
-                    )
-                })
-                .ToList();
-
-            ViewBag.Timestamps = timestamps;
-            return View(grouped);
-        }
         [Authorize(Roles = "Assessor, Lead, Admin")]
         [HttpGet]
         public async Task<IActionResult> Compare(int candidateId, int[] ids)
@@ -605,4 +621,5 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
+
 
