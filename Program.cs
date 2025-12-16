@@ -65,3 +65,8 @@ app.MapControllerRoute(
 );
 
 app.Run();
+
+if (app.Environment.IsProduction())
+{
+    app.UseDeveloperExceptionPage();
+}
