@@ -1,4 +1,4 @@
-﻿using CAT.AID.Web.Models;
+using CAT.AID.Web.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CAT.AID.Models   // <-- THIS WAS MISSING
@@ -15,9 +15,6 @@ namespace CAT.AID.Models   // <-- THIS WAS MISSING
         // 🔹 Assessment JSON data
         public string? AssessmentDataJson { get; set; }
         public string? AssessmentResultJson { get; set; }
-    public DateOnly? ScheduledDate { get; set; }
-    public TimeSpan? ScheduledFrom { get; set; }
-    public TimeSpan? ScheduledTo { get; set; }
 
         // 🔹 Auto scoring results
         public string? ScoreJson { get; set; }
@@ -55,5 +52,3 @@ namespace CAT.AID.Models   // <-- THIS WAS MISSING
             Status == AssessmentStatus.SentBack;
     }
 }
-
-
