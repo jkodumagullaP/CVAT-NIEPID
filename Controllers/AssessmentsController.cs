@@ -33,7 +33,6 @@ namespace CAT.AID.Web.Controllers
 
         // -------------------- 1. TASKS FOR ASSESSOR --------------------
         [Authorize(Roles = "LeadAssessor, Assessor")]
-        [Authorize(Roles = "Assessor")]
         public async Task<IActionResult> MyTasks()
         {
             var uid = _user.GetUserId(User)!;
@@ -606,3 +605,4 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
+
