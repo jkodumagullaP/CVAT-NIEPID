@@ -495,37 +495,58 @@ namespace CAT.AID.Web.Controllers
     string action,
     string? newAssessorId)
         {
-            if (string.IsNullOrWhiteSpace(leadComments))
+            var assessment = await _db.Assessments
+                .Include(a => a.Candidate)
+                .Include(a => a.Assessor)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (assessment == null)
+                return NotFound();
+
+            // ✅ Enforce comments ONLY for Send Back / Reject
+            if ((action == "sendback" || action == "reject") &&
+                string.IsNullOrWhiteSpace(leadComments))
             {
-                ModelState.AddModelError("", "Lead comments are mandatory.");
-                return RedirectToAction(nameof(Review), new { id });
+                ModelState.AddModelError("LeadComments",
+                    "Lead comments are mandatory for Send Back or Reject.");
+
+                // reload data needed by Review view
+                ViewBag.Sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
+                    System.IO.File.ReadAllText(
+                        Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json")
+                    )
+                );
+
+                ViewBag.Assessors = await _db.Users.ToListAsync();
+
+                return View(assessment); // 🔥 RETURN VIEW, NOT REDIRECT
             }
 
-            var a = await _db.Assessments.FindAsync(id);
-            if (a == null) return NotFound();
+            // Save lead comments
+            assessment.LeadComments = leadComments;
+            assessment.ReviewedAt = DateTime.UtcNow;
 
-            a.LeadComments = leadComments;
-            a.ReviewedAt = DateTime.UtcNow;
-
+            // Status change
             switch (action)
             {
                 case "approve":
-                    a.Status = AssessmentStatus.Approved;
+                    assessment.Status = AssessmentStatus.Approved;
                     break;
 
                 case "sendback":
-                    a.Status = AssessmentStatus.SentBack;
+                    assessment.Status = AssessmentStatus.SentBack;
                     break;
 
                 case "reject":
-                    a.Status = AssessmentStatus.Rejected;
+                    assessment.Status = AssessmentStatus.Rejected;
                     break;
             }
 
-            if (!string.IsNullOrEmpty(newAssessorId))
+            // Reassign assessor if selected
+            if (!string.IsNullOrWhiteSpace(newAssessorId))
             {
-                a.AssessorId = newAssessorId;
-                a.Status = AssessmentStatus.Assigned;
+                assessment.AssessorId = newAssessorId;
+                assessment.Status = AssessmentStatus.Assigned;
             }
 
             await _db.SaveChangesAsync();
