@@ -49,10 +49,7 @@
     <strong>IQ Level:</strong>
     <span style="color:@iqColor;font-weight:bold">@iqLevel</span>
 </div>
-<div class="alert alert-secondary mt-3">
-    <h6 class="fw-bold">📝 Overall Summary</h6>
-    <p>@ViewBag.Summary</p>
-</div>
+
 
 <ul class="nav nav-tabs" role="tablist">
     <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#report">📊 Report</a></li>
@@ -278,7 +275,10 @@
                 </tbody>
             </table>
         }
-
+<div class="alert alert-secondary mt-3">
+    <h6 class="fw-bold">📝 Overall Summary</h6>
+    <p>@ViewBag.Summary</p>
+</div>
         <div class="text-end mt-3">
             <form method="post" action="/Assessments/ExportReportPdf/@Model.Id">
                 <input type="hidden" id="barChartImage" name="barChartImage" />
@@ -317,4 +317,5 @@
             document.getElementById("doughnutChart").toDataURL().split(",")[1];
     }, 1000);
 </script>
+
 
