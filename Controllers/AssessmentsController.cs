@@ -120,90 +120,146 @@ namespace CAT.AID.Web.Controllers
         // -------------------- 3. SUBMIT ASSESSMENT --------------------
 
 
+
+
         [HttpPost]
         [Authorize(Roles = "Assessor, Lead")]
         public async Task<IActionResult> Perform(int id, string actionType)
         {
-            var a = await _db.Assessments.FindAsync(id);
-            if (a == null) return NotFound();
-            if (!a.IsEditableByAssessor) return Unauthorized();
+            var assessment = await _db.Assessments
+                .Include(a => a.Candidate)
+                .FirstOrDefaultAsync(a => a.Id == id);
 
-            // 1️⃣ READ ALL FORM FIELDS (ANS_, SCORE_, CMT_, SUMMARY_COMMENTS)
+            if (assessment == null)
+                return NotFound();
+
+            if (!assessment.IsEditableByAssessor)
+                return Unauthorized();
+
+            // -----------------------------------------
+            // 1️⃣ Collect all answers, scores & comments
+            // -----------------------------------------
             var data = new Dictionary<string, string>();
+
             foreach (var key in Request.Form.Keys)
-                if (key.StartsWith("ANS_") || key.StartsWith("SCORE_") || key.StartsWith("CMT_") || key == "SUMMARY_COMMENTS")
-                    data[key] = Request.Form[key];
-
-            // 2️⃣ Handle FILE Uploads (optional)
-            var uploadFolder = Path.Combine(_environment.WebRootPath, "uploads");
-            if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
-
-            foreach (var file in Request.Form.Files)
             {
-                if (file.Length > 0)
+                if (key.StartsWith("ANS_") ||
+                    key.StartsWith("SCORE_") ||
+                    key.StartsWith("CMT_") ||
+                    key == "SUMMARY_COMMENTS")
                 {
-                    string name = $"{Guid.NewGuid()}_{file.FileName}";
-                    string path = Path.Combine(uploadFolder, name);
-                    using var stream = System.IO.File.Create(path);
-                    await file.CopyToAsync(stream);
-                    data[file.Name] = name;
+                    data[key] = Request.Form[key];
                 }
             }
 
-            // 3️⃣ Save Answer JSON
-            a.AssessmentResultJson = JsonSerializer.Serialize(data);
+            // -----------------------------------------
+            // 2️⃣ Handle FILE UPLOADS (PER QUESTION)
+            // -----------------------------------------
+            var uploadFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            Directory.CreateDirectory(uploadFolder);
 
-            // 4️⃣ Build SCORE JSON (100% corrected MaxScore)
-            var sectionsData = JsonSerializer.Deserialize<List<AssessmentSection>>(
-                System.IO.File.ReadAllText(Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json"))
-            );
+            var fileCounters = new Dictionary<string, int>();
+
+            foreach (var file in Request.Form.Files)
+            {
+                if (file.Length == 0)
+                    continue;
+
+                // Expected: FILE_UPLOAD_{QuestionId}
+                if (!file.Name.StartsWith("FILE_UPLOAD_"))
+                    continue;
+
+                var questionId = file.Name.Replace("FILE_UPLOAD_", "");
+
+                if (!fileCounters.ContainsKey(questionId))
+                    fileCounters[questionId] = 0;
+
+                fileCounters[questionId]++;
+
+                var savedFileName =
+                    $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+
+                var savePath = Path.Combine(uploadFolder, savedFileName);
+
+                using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Persist reference in JSON
+                data[$"FILE_{questionId}_{fileCounters[questionId]}"] = savedFileName;
+            }
+
+            // -----------------------------------------
+            // 3️⃣ Save assessment result JSON
+            // -----------------------------------------
+            assessment.AssessmentResultJson =
+                JsonSerializer.Serialize(data);
+
+            // -----------------------------------------
+            // 4️⃣ Calculate SCORE JSON
+            // -----------------------------------------
+            var sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
+                System.IO.File.ReadAllText(
+                    Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json")
+                )
+            ) ?? new List<AssessmentSection>();
 
             var scoreDto = new AssessmentScoreDTO();
-            int totalMaxScore = 0;   // holds Q count × max score
+            int totalMaxScore = 0;
 
-            foreach (var sec in sectionsData)
+            foreach (var section in sections)
             {
-                int sectionTotal = 0;
+                int sectionScore = 0;
                 var questionScores = new Dictionary<string, int>();
 
-                foreach (var q in sec.Questions)
+                foreach (var q in section.Questions)
                 {
-                    string scoreKey = $"SCORE_{q.Id}";
-                    int maxPerQuestion = 3;     // change easily later
-                    totalMaxScore += maxPerQuestion;
+                    totalMaxScore += 3;
 
-                    if (data.TryGetValue(scoreKey, out string scr) && int.TryParse(scr, out int scoreVal))
+                    var scoreKey = $"SCORE_{q.Id}";
+                    if (data.TryGetValue(scoreKey, out var val) &&
+                        int.TryParse(val, out int score))
                     {
-                        sectionTotal += scoreVal;
-                        questionScores[q.Text] = scoreVal;
+                        sectionScore += score;
+                        questionScores[q.Text] = score;
                     }
                 }
 
-                scoreDto.SectionScores[sec.Category] = sectionTotal;
-                scoreDto.SectionQuestionScores[sec.Category] = questionScores;
+                scoreDto.SectionScores[section.Category] = sectionScore;
+                scoreDto.SectionQuestionScores[section.Category] = questionScores;
             }
 
             scoreDto.TotalScore = scoreDto.SectionScores.Sum(x => x.Value);
             scoreDto.MaxScore = totalMaxScore;
-            a.ScoreJson = JsonSerializer.Serialize(scoreDto);
 
-            // 5️⃣ Change Status Based On Action
+            assessment.ScoreJson =
+                JsonSerializer.Serialize(scoreDto);
+
+            // -----------------------------------------
+            // 5️⃣ Handle SAVE / SUBMIT
+            // -----------------------------------------
             if (actionType == "save")
             {
-                a.Status = AssessmentStatus.InProgress;
-                TempData["msg"] = "Assessment saved successfully!";
+                assessment.Status = AssessmentStatus.InProgress;
+                TempData["msg"] = "Assessment saved successfully.";
             }
             else if (actionType == "submit")
             {
-                a.Status = AssessmentStatus.Submitted;
-                a.SubmittedAt = DateTime.UtcNow;
-                TempData["msg"] = "Assessment submitted for review!";
+                assessment.Status = AssessmentStatus.Submitted;
+                assessment.SubmittedAt = DateTime.UtcNow;
+                TempData["msg"] = "Assessment submitted for review.";
             }
 
-            // 6️⃣ FINAL — Save to DB
+            // -----------------------------------------
+            // 6️⃣ Persist
+            // -----------------------------------------
             await _db.SaveChangesAsync();
+
             return RedirectToAction(nameof(MyTasks));
         }
+
+
         public IActionResult Summary(int id)
         {
             var a = _db.Assessments
@@ -433,13 +489,38 @@ namespace CAT.AID.Web.Controllers
 
         [HttpPost]
         [Authorize(Roles = "LeadAssessor, Admin")]
-        public async Task<IActionResult> Review(int id, string leadComments, string action, string? newAssessorId)
+        public async Task<IActionResult> Review(
+    int id,
+    string leadComments,
+    string action,
+    string? newAssessorId)
         {
+            if (string.IsNullOrWhiteSpace(leadComments))
+            {
+                ModelState.AddModelError("", "Lead comments are mandatory.");
+                return RedirectToAction(nameof(Review), new { id });
+            }
+
             var a = await _db.Assessments.FindAsync(id);
             if (a == null) return NotFound();
 
             a.LeadComments = leadComments;
             a.ReviewedAt = DateTime.UtcNow;
+
+            switch (action)
+            {
+                case "approve":
+                    a.Status = AssessmentStatus.Approved;
+                    break;
+
+                case "sendback":
+                    a.Status = AssessmentStatus.SentBack;
+                    break;
+
+                case "reject":
+                    a.Status = AssessmentStatus.Rejected;
+                    break;
+            }
 
             if (!string.IsNullOrEmpty(newAssessorId))
             {
@@ -447,17 +528,10 @@ namespace CAT.AID.Web.Controllers
                 a.Status = AssessmentStatus.Assigned;
             }
 
-            if (action == "approve") a.Status = AssessmentStatus.Approved;
-            if (action == "reject") a.Status = AssessmentStatus.Rejected;
-            if (action == "sendback") a.Status = AssessmentStatus.SentBack;
-            if (action == "lead-edit")
-            {
-                a.Status = AssessmentStatus.InProgress;
-                a.AssessorId = _user.GetUserId(User)!;
-            }
-
             await _db.SaveChangesAsync();
-            return RedirectToAction("ReviewQueue");
+
+            TempData["msg"] = $"Assessment {action} successfully.";
+            return RedirectToAction(nameof(ReviewQueue));
         }
 
         [Authorize(Roles = "LeadAssessor, Admin")]
