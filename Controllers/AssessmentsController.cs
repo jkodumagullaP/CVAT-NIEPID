@@ -378,7 +378,12 @@ public async Task<IActionResult> MyTasks()
 
             if (a == null) return NotFound();
 
-            var answers = string.IsNullOrWhiteSpace(a.AssessmentDataJson)
+var answers = string.IsNullOrWhiteSpace(a.AssessmentResultJson)
+    ? new Dictionary<string, string>()
+    : JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentResultJson)!;
+
+ViewBag.Answers = answers;
+ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS");
                 ? new Dictionary<string, string>()
                 : JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentDataJson);
 
@@ -432,10 +437,15 @@ public async Task<IActionResult> MyTasks()
             if (a == null) return NotFound();
 
             // load saved answers of assessor
-            Dictionary<string, string> answers =
-            string.IsNullOrWhiteSpace(a.AssessmentDataJson)
-            ? new()
-            : JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentDataJson);
+            var answers = string.IsNullOrWhiteSpace(a.AssessmentResultJson)
+    ? new Dictionary<string, string>()
+    : JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentResultJson)!;
+
+ViewBag.Answers = answers;
+ViewBag.Summary = answers.ContainsKey("SUMMARY_COMMENTS")
+    ? answers["SUMMARY_COMMENTS"]
+    : "";
+
 
 
             // load questions
@@ -621,5 +631,6 @@ public async Task<IActionResult> MyTasks()
         }
     }
 }
+
 
 
