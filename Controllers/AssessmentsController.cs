@@ -368,35 +368,35 @@ public async Task<IActionResult> MyTasks()
 
 
 
-        [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
-        public async Task<IActionResult> View(int id)
-        {
-            var a = await _db.Assessments
-                .Include(x => x.Candidate)
-                .Include(x => x.Assessor)   // 🔥 mandatory
-                .FirstOrDefaultAsync(x => x.Id == id);
+       [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
+public async Task<IActionResult> View(int id)
+{
+    var assessment = await _db.Assessments
+        .Include(a => a.Candidate)
+        .Include(a => a.Assessor)
+        .FirstOrDefaultAsync(a => a.Id == id);
 
-            if (a == null) return NotFound();
+    if (assessment == null)
+        return NotFound();
 
-var answers = string.IsNullOrWhiteSpace(a.AssessmentResultJson)
-    ? new Dictionary<string, string>()
-    : JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentResultJson)!;
+    // ✅ Load ALL answers, summary & evidence
+    var answers = string.IsNullOrWhiteSpace(assessment.AssessmentResultJson)
+        ? new Dictionary<string, string>()
+        : JsonSerializer.Deserialize<Dictionary<string, string>>(assessment.AssessmentResultJson)!;
 
-ViewBag.Answers = answers;
-ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS");
-                ? new Dictionary<string, string>()
-                : JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentDataJson);
+    ViewBag.Answers = answers;
+    ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS", "");
 
-            var qfile = Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json");
-            var sections = JsonSerializer.Deserialize<List<AssessmentSection>>(System.IO.File.ReadAllText(qfile));
+    // Load questions
+    var qfile = Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json");
+    var sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
+        System.IO.File.ReadAllText(qfile)
+    ) ?? new List<AssessmentSection>();
 
-            ViewBag.Sections = sections;
-            ViewBag.Answers = answers;
-            ViewBag.RecommendationFile = Path.Combine(_environment.WebRootPath, "data", "recommendations.json");
+    ViewBag.Sections = sections;
 
-            return View("ViewAssessment", a);
-        }
-
+    return View("ViewAssessment", assessment);
+}
 
         [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
         public async Task<IActionResult> Recommendations(int id)
@@ -426,42 +426,35 @@ ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS");
 
         // -------------------- 6. GET REVIEW --------------------
 
-        [Authorize(Roles = "LeadAssessor, Admin")]
-        public async Task<IActionResult> Review(int id)
-        {
-            var a = await _db.Assessments
-                .Include(x => x.Candidate)
-                .Include(x => x.Assessor)
-                .FirstOrDefaultAsync(x => x.Id == id);
+       [Authorize(Roles = "LeadAssessor, Admin")]
+public async Task<IActionResult> Review(int id)
+{
+    var assessment = await _db.Assessments
+        .Include(a => a.Candidate)
+        .Include(a => a.Assessor)
+        .FirstOrDefaultAsync(a => a.Id == id);
 
-            if (a == null) return NotFound();
+    if (assessment == null)
+        return NotFound();
 
-            // load saved answers of assessor
-            var answers = string.IsNullOrWhiteSpace(a.AssessmentResultJson)
-    ? new Dictionary<string, string>()
-    : JsonSerializer.Deserialize<Dictionary<string, string>>(a.AssessmentResultJson)!;
+    var answers = string.IsNullOrWhiteSpace(assessment.AssessmentResultJson)
+        ? new Dictionary<string, string>()
+        : JsonSerializer.Deserialize<Dictionary<string, string>>(assessment.AssessmentResultJson)!;
 
-ViewBag.Answers = answers;
-ViewBag.Summary = answers.ContainsKey("SUMMARY_COMMENTS")
-    ? answers["SUMMARY_COMMENTS"]
-    : "";
+    ViewBag.Answers = answers;
+    ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS", "");
 
+    var qfile = Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json");
+    ViewBag.Sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
+        System.IO.File.ReadAllText(qfile)
+    ) ?? new List<AssessmentSection>();
 
+    ViewBag.Assessors = await _db.Users
+        .Where(u => u.Location == assessment.Candidate.CommunicationAddress)
+        .ToListAsync();
 
-            // load questions
-            var qfile = Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json");
-            var sections = JsonSerializer.Deserialize<List<AssessmentSection>>(System.IO.File.ReadAllText(qfile));
-
-            ViewBag.Sections = sections;
-            ViewBag.Answers = answers;
-
-            // assessor reassign dropdown
-            ViewBag.Assessors = await _db.Users
-                .Where(u => u.Location == a.Candidate.CommunicationAddress)
-                .ToListAsync();
-
-            return View(a);
-        }
+    return View(assessment);
+}
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> ExportReportPdf(int id)
@@ -631,6 +624,7 @@ ViewBag.Summary = answers.ContainsKey("SUMMARY_COMMENTS")
         }
     }
 }
+
 
 
 
