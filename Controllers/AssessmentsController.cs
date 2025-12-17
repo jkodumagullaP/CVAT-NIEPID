@@ -347,15 +347,42 @@ public async Task<IActionResult> MyTasks()
 
         // -------------------- 4. SUMMARY RESULT DISPLAY --------------------
         [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
+[Authorize]
+public async Task<IActionResult> ExportComparisonPdf(int candidateId, string ids)
+{
+    if (string.IsNullOrWhiteSpace(ids))
+        return BadRequest("No assessments selected");
 
-        [Authorize]
-        public async Task<IActionResult> ExportPdf(int id)
-        {
-            var a = await _db.Assessments.Include(x => x.Candidate).FirstOrDefaultAsync(x => x.Id == id);
-            if (a == null) return NotFound();
-            var pdf = ReportGenerator.BuildAssessmentReport(a);
-            return File(pdf, "application/pdf", $"Assessment_{a.Id}.pdf");
-        }
+    var idList = ids
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(int.Parse)
+        .ToList();
+
+    var assessments = await _db.Assessments
+        .Include(a => a.Candidate)
+        .Where(a => idList.Contains(a.Id))
+        .OrderBy(a => a.CreatedAt)
+        .ToListAsync();
+
+    if (!assessments.Any())
+        return NotFound("Assessments not found");
+
+    // Build comparison model
+    var model = ComparisonReportBuilder.Build(assessments);
+
+    // Render Razor view → HTML
+    var html = await this.RenderViewToStringAsync(
+        "~/Views/Assessments/ComparePdf.cshtml",
+        model
+    );
+
+    // Convert HTML → PDF
+    var pdf = PdfHelper.GeneratePdfFromHtml(html);
+
+    return File(pdf, "application/pdf",
+        $"Comparison_{model.CandidateName}.pdf");
+}
+
 
         [Authorize]
         public async Task<IActionResult> ExportExcel(int id)
@@ -624,6 +651,7 @@ public async Task<IActionResult> Review(int id)
         }
     }
 }
+
 
 
 
