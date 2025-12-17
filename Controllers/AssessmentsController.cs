@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using CAT.AID.Web.Helpers;
 
 
 
@@ -365,18 +366,16 @@ public async Task<IActionResult> ExportComparisonPdf(int candidateId, string ids
         .ToListAsync();
 
     if (!assessments.Any())
-        return NotFound("Assessments not found");
+        return NotFound();
 
-    // Build comparison model
     var model = ComparisonReportBuilder.Build(assessments);
 
-    // Render Razor view → HTML
-    var html = await this.RenderViewToStringAsync(
+    var html = await RazorViewRenderer.RenderViewToStringAsync(
+        this,
         "~/Views/Assessments/ComparePdf.cshtml",
         model
     );
 
-    // Convert HTML → PDF
     var pdf = PdfHelper.GeneratePdfFromHtml(html);
 
     return File(pdf, "application/pdf",
@@ -651,6 +650,7 @@ public async Task<IActionResult> Review(int id)
         }
     }
 }
+
 
 
 
