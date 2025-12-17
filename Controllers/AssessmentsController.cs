@@ -92,7 +92,7 @@ public async Task<IActionResult> MyTasks()
     return View(grouped);
 }
 
-        [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
+        [Authorize(Roles = "LeadAssessor, Admin")]
         [HttpGet]
         public async Task<IActionResult> Compare(int candidateId, int[] ids)
         {
@@ -651,6 +651,7 @@ public async Task<IActionResult> Review(int id)
         }
     }
 }
+
 
 
 
