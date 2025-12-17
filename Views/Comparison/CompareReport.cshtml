@@ -95,8 +95,13 @@
     <a href="javascript:history.back()" class="btn btn-secondary">
         ⬅ Back
     </a>
-    <a href="/Assessments/ExportComparisonPdf?candidateId=@Model.CandidateId&ids=@string.Join(",", Model.AssessmentIds)"
-       class="btn btn-danger">
-        📄 Export PDF
-    </a>
+   <a asp-controller="Assessments"
+   asp-action="ExportComparisonPdf"
+   asp-route-candidateId="@Model.CandidateId"
+   asp-route-ids="@string.Join(",", Model.AssessmentIds)"
+   class="btn btn-danger">
+    📄 Export PDF
+</a>
+
 </div>
+
