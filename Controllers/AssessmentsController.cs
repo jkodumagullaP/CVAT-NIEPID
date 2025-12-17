@@ -370,18 +370,15 @@ public async Task<IActionResult> ExportComparisonPdf(int candidateId, string ids
 
     var model = ComparisonReportBuilder.Build(assessments);
 
-    var html = await RazorViewRenderer.RenderViewToStringAsync(
-        this,
-        "~/Views/Assessments/ComparePdf.cshtml",
-        model
+    var document = new ComparisonPdfDocument(model);
+    var pdfBytes = document.GeneratePdf();
+
+    return File(
+        pdfBytes,
+        "application/pdf",
+        $"Comparison_{model.CandidateName}.pdf"
     );
-
-    var pdf = PdfHelper.GeneratePdfFromHtml(html);
-
-    return File(pdf, "application/pdf",
-        $"Comparison_{model.CandidateName}.pdf");
 }
-
 
         [Authorize]
         public async Task<IActionResult> ExportExcel(int id)
@@ -650,6 +647,7 @@ public async Task<IActionResult> Review(int id)
         }
     }
 }
+
 
 
 
