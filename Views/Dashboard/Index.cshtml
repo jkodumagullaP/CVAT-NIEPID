@@ -92,14 +92,13 @@
 
 <!-- ===================== CHART JS ===================== -->
 <script>
-    /* Trend Chart */
     new Chart(document.getElementById("trendChart"), {
         type: "line",
         data: {
-            labels: @Html.Raw(Json.Serialize(Model.MonthLabels)),
+            labels: @Html.Raw(JsonSerializer.Serialize(Model.MonthLabels ?? new List<string>())),
             datasets: [{
                 label: "Assessments",
-                data: @Html.Raw(Json.Serialize(Model.MonthCounts)),
+                data: @Html.Raw(JsonSerializer.Serialize(Model.MonthCounts ?? new List<int>())),
                 borderWidth: 2,
                 borderColor: "#163d89",
                 fill: false,
@@ -108,40 +107,37 @@
         }
     });
 
-    /* Assessor Chart */
     new Chart(document.getElementById("assessorChart"), {
         type: "bar",
         data: {
-            labels: @Html.Raw(Json.Serialize(Model.AssessorNames)),
+            labels: @Html.Raw(JsonSerializer.Serialize(Model.AssessorNames ?? new List<string>())),
             datasets: [{
                 label: "Completed",
-                data: @Html.Raw(Json.Serialize(Model.AssessorCounts)),
+                data: @Html.Raw(JsonSerializer.Serialize(Model.AssessorCounts ?? new List<int>())),
                 backgroundColor: "#90b4e8"
             }]
         }
     });
 
-    /* Low Domain Chart */
     new Chart(document.getElementById("lowDomainChart"), {
         type: "bar",
         data: {
-            labels: @Html.Raw(Json.Serialize(Model.LowDomains.Keys)),
+            labels: @Html.Raw(JsonSerializer.Serialize(Model.LowDomains?.Keys ?? new List<string>())),
             datasets: [{
                 label: "Average Score",
-                data: @Html.Raw(Json.Serialize(Model.LowDomains.Values)),
+                data: @Html.Raw(JsonSerializer.Serialize(Model.LowDomains?.Values ?? new List<double>())),
                 backgroundColor: "#e67a7a"
             }]
         }
     });
 
-    /* Activity Timeline */
     new Chart(document.getElementById("timelineChart"), {
         type: "line",
         data: {
-            labels: @Html.Raw(Json.Serialize(Model.RecentDates)),
+            labels: @Html.Raw(JsonSerializer.Serialize(Model.RecentDates ?? new List<string>())),
             datasets: [{
                 label: "Assessments",
-                data: @Html.Raw(Json.Serialize(Model.RecentCounts)),
+                data: @Html.Raw(JsonSerializer.Serialize(Model.RecentCounts ?? new List<int>())),
                 borderColor: "#2d7dd2",
                 borderWidth: 2,
                 tension: 0.35
@@ -149,4 +145,3 @@
         }
     });
 </script>
-
