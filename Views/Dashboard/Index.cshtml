@@ -1,4 +1,4 @@
-@using CAT.AID.Models.DTO       // ✔ RIGHT
+@using CAT.AID.Models.DTO      
 @model DashboardDTO
 @{
     ViewData["Title"] = "Dashboard";
@@ -92,13 +92,14 @@
 
 <!-- ===================== CHART JS ===================== -->
 <script>
+    /* Trend Chart */
     new Chart(document.getElementById("trendChart"), {
         type: "line",
         data: {
-            labels: @Html.Raw(JsonSerializer.Serialize(Model.MonthLabels ?? new List<string>())),
+            labels: @Html.Raw(Json.Serialize(Model.MonthLabels)),
             datasets: [{
                 label: "Assessments",
-                data: @Html.Raw(JsonSerializer.Serialize(Model.MonthCounts ?? new List<int>())),
+                data: @Html.Raw(Json.Serialize(Model.MonthCounts)),
                 borderWidth: 2,
                 borderColor: "#163d89",
                 fill: false,
@@ -107,37 +108,40 @@
         }
     });
 
+    /* Assessor Chart */
     new Chart(document.getElementById("assessorChart"), {
         type: "bar",
         data: {
-            labels: @Html.Raw(JsonSerializer.Serialize(Model.AssessorNames ?? new List<string>())),
+            labels: @Html.Raw(Json.Serialize(Model.AssessorNames)),
             datasets: [{
                 label: "Completed",
-                data: @Html.Raw(JsonSerializer.Serialize(Model.AssessorCounts ?? new List<int>())),
+                data: @Html.Raw(Json.Serialize(Model.AssessorCounts)),
                 backgroundColor: "#90b4e8"
             }]
         }
     });
 
+    /* Low Domain Chart */
     new Chart(document.getElementById("lowDomainChart"), {
         type: "bar",
         data: {
-            labels: @Html.Raw(JsonSerializer.Serialize(Model.LowDomains?.Keys ?? new List<string>())),
+            labels: @Html.Raw(Json.Serialize(Model.LowDomains.Keys)),
             datasets: [{
                 label: "Average Score",
-                data: @Html.Raw(JsonSerializer.Serialize(Model.LowDomains?.Values ?? new List<double>())),
+                data: @Html.Raw(Json.Serialize(Model.LowDomains.Values)),
                 backgroundColor: "#e67a7a"
             }]
         }
     });
 
+    /* Activity Timeline */
     new Chart(document.getElementById("timelineChart"), {
         type: "line",
         data: {
-            labels: @Html.Raw(JsonSerializer.Serialize(Model.RecentDates ?? new List<string>())),
+            labels: @Html.Raw(Json.Serialize(Model.RecentDates)),
             datasets: [{
                 label: "Assessments",
-                data: @Html.Raw(JsonSerializer.Serialize(Model.RecentCounts ?? new List<int>())),
+                data: @Html.Raw(Json.Serialize(Model.RecentCounts)),
                 borderColor: "#2d7dd2",
                 borderWidth: 2,
                 tension: 0.35
@@ -145,3 +149,4 @@
         }
     });
 </script>
+
