@@ -371,8 +371,9 @@ namespace CAT.AID.Web.Controllers
 
             var model = ComparisonReportBuilder.Build(assessments);
 
-          var document = new CAT.AID.Web.Services.PDF.ComparisonPdfDocument(model);
-var pdfBytes = document.GeneratePdf();
+            var document = new ComparisonPdfDocument(model);
+
+            var pdfBytes = document.GeneratePdf();   // ✅ QuestPDF extension
 
             return File(
                 pdfBytes,
@@ -649,7 +650,6 @@ var pdfBytes = document.GeneratePdf();
         }
     }
 }
-
 
 
 
