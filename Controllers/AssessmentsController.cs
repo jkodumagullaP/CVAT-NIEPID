@@ -1,6 +1,7 @@
 using CAT.AID.Models;
 using CAT.AID.Models.DTO;
 using CAT.AID.Web.Data;
+using CAT.AID.Web.Helpers;
 using CAT.AID.Web.Models;
 using CAT.AID.Web.Models.DTO;
 using CAT.AID.Web.Services;
@@ -9,8 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
 using System.Text.Json;
-using CAT.AID.Web.Helpers;
 
 
 
@@ -34,64 +35,64 @@ namespace CAT.AID.Web.Controllers
 
         // -------------------- 1. TASKS FOR ASSESSOR --------------------
         [Authorize(Roles = "Assessor,LeadAssessor")]
-public async Task<IActionResult> MyTasks()
-{
-    var userId = _user.GetUserId(User);
-
-    IQueryable<Assessment> query = _db.Assessments
-        .Include(a => a.Candidate);
-
-    // Assessor sees only assigned tasks
-    if (User.IsInRole("Assessor"))
-    {
-        query = query.Where(a => a.AssessorId == userId);
-    }
-
-    // Lead assessor sees all assigned & submitted
-    if (User.IsInRole("LeadAssessor"))
-    {
-        query = query.Where(a =>
-            a.Status == AssessmentStatus.Assigned ||
-            a.Status == AssessmentStatus.Submitted);
-    }
-
-    var tasks = await query
-        .OrderByDescending(a => a.CreatedAt)
-        .ToListAsync();
-
-    if (!tasks.Any())
-        return View(new List<CandidateAssessmentPivotVM>());
-
-    var timestamps = tasks
-        .Select(a => a.CreatedAt)
-        .Distinct()
-        .OrderBy(t => t)
-        .ToList();
-
-    var grouped = tasks
-        .GroupBy(a => a.CandidateId)
-        .Select(g => new CandidateAssessmentPivotVM
+        public async Task<IActionResult> MyTasks()
         {
-            CandidateId = g.Key,
-            CandidateName = g.FirstOrDefault()?.Candidate?.FullName ?? "N/A",
+            var userId = _user.GetUserId(User);
 
-            AssessmentIds = timestamps.ToDictionary(
-                ts => ts,
-                ts => g.FirstOrDefault(a => a.CreatedAt == ts)?.Id
-            ),
+            IQueryable<Assessment> query = _db.Assessments
+                .Include(a => a.Candidate);
 
-            StatusMapping = g
-                .Where(a => a != null)
-                .ToDictionary(
-                    a => a.Id,
-                    a => a.Status.ToString()
-                )
-        })
-        .ToList();
+            // Assessor sees only assigned tasks
+            if (User.IsInRole("Assessor"))
+            {
+                query = query.Where(a => a.AssessorId == userId);
+            }
 
-    ViewBag.Timestamps = timestamps;
-    return View(grouped);
-}
+            // Lead assessor sees all assigned & submitted
+            if (User.IsInRole("LeadAssessor"))
+            {
+                query = query.Where(a =>
+                    a.Status == AssessmentStatus.Assigned ||
+                    a.Status == AssessmentStatus.Submitted);
+            }
+
+            var tasks = await query
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
+
+            if (!tasks.Any())
+                return View(new List<CandidateAssessmentPivotVM>());
+
+            var timestamps = tasks
+                .Select(a => a.CreatedAt)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+
+            var grouped = tasks
+                .GroupBy(a => a.CandidateId)
+                .Select(g => new CandidateAssessmentPivotVM
+                {
+                    CandidateId = g.Key,
+                    CandidateName = g.FirstOrDefault()?.Candidate?.FullName ?? "N/A",
+
+                    AssessmentIds = timestamps.ToDictionary(
+                        ts => ts,
+                        ts => g.FirstOrDefault(a => a.CreatedAt == ts)?.Id
+                    ),
+
+                    StatusMapping = g
+                        .Where(a => a != null)
+                        .ToDictionary(
+                            a => a.Id,
+                            a => a.Status.ToString()
+                        )
+                })
+                .ToList();
+
+            ViewBag.Timestamps = timestamps;
+            return View(grouped);
+        }
 
         [Authorize(Roles = "LeadAssessor, Admin")]
         [HttpGet]
@@ -348,37 +349,39 @@ public async Task<IActionResult> MyTasks()
 
         // -------------------- 4. SUMMARY RESULT DISPLAY --------------------
         [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
-[Authorize]
-public async Task<IActionResult> ExportComparisonPdf(int candidateId, string ids)
-{
-    if (string.IsNullOrWhiteSpace(ids))
-        return BadRequest("No assessments selected");
+        [Authorize]
+        public async Task<IActionResult> ExportComparisonPdf(int candidateId, string ids)
+        {
+            if (string.IsNullOrWhiteSpace(ids))
+                return BadRequest("No assessments selected");
 
-    var idList = ids
-        .Split(',', StringSplitOptions.RemoveEmptyEntries)
-        .Select(int.Parse)
-        .ToList();
+            var idList = ids
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToList();
 
-    var assessments = await _db.Assessments
-        .Include(a => a.Candidate)
-        .Where(a => idList.Contains(a.Id))
-        .OrderBy(a => a.CreatedAt)
-        .ToListAsync();
+            var assessments = await _db.Assessments
+                .Include(a => a.Candidate)
+                .Where(a => idList.Contains(a.Id))
+                .OrderBy(a => a.CreatedAt)
+                .ToListAsync();
 
-    if (!assessments.Any())
-        return NotFound();
+            if (!assessments.Any())
+                return NotFound();
 
-    var model = ComparisonReportBuilder.Build(assessments);
+            var model = ComparisonReportBuilder.Build(assessments);
 
-    var document = new ComparisonPdfDocument(model);
-    var pdfBytes = document.GeneratePdf();
+            var document = new ComparisonPdfDocument(model);
 
-    return File(
-        pdfBytes,
-        "application/pdf",
-        $"Comparison_{model.CandidateName}.pdf"
-    );
-}
+            var pdfBytes = document.GeneratePdf();   // ✅ QuestPDF extension
+
+            return File(
+                pdfBytes,
+                "application/pdf",
+                $"Comparison_{model.CandidateName}.pdf"
+            );
+        }
+
 
         [Authorize]
         public async Task<IActionResult> ExportExcel(int id)
@@ -391,35 +394,35 @@ public async Task<IActionResult> ExportComparisonPdf(int candidateId, string ids
 
 
 
-       [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
-public async Task<IActionResult> View(int id)
-{
-    var assessment = await _db.Assessments
-        .Include(a => a.Candidate)
-        .Include(a => a.Assessor)
-        .FirstOrDefaultAsync(a => a.Id == id);
+        [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
+        public async Task<IActionResult> View(int id)
+        {
+            var assessment = await _db.Assessments
+                .Include(a => a.Candidate)
+                .Include(a => a.Assessor)
+                .FirstOrDefaultAsync(a => a.Id == id);
 
-    if (assessment == null)
-        return NotFound();
+            if (assessment == null)
+                return NotFound();
 
-    // ✅ Load ALL answers, summary & evidence
-    var answers = string.IsNullOrWhiteSpace(assessment.AssessmentResultJson)
-        ? new Dictionary<string, string>()
-        : JsonSerializer.Deserialize<Dictionary<string, string>>(assessment.AssessmentResultJson)!;
+            // ✅ Load ALL answers, summary & evidence
+            var answers = string.IsNullOrWhiteSpace(assessment.AssessmentResultJson)
+                ? new Dictionary<string, string>()
+                : JsonSerializer.Deserialize<Dictionary<string, string>>(assessment.AssessmentResultJson)!;
 
-    ViewBag.Answers = answers;
-    ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS", "");
+            ViewBag.Answers = answers;
+            ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS", "");
 
-    // Load questions
-    var qfile = Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json");
-    var sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
-        System.IO.File.ReadAllText(qfile)
-    ) ?? new List<AssessmentSection>();
+            // Load questions
+            var qfile = Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json");
+            var sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
+                System.IO.File.ReadAllText(qfile)
+            ) ?? new List<AssessmentSection>();
 
-    ViewBag.Sections = sections;
+            ViewBag.Sections = sections;
 
-    return View("ViewAssessment", assessment);
-}
+            return View("ViewAssessment", assessment);
+        }
 
         [Authorize(Roles = "Assessor, LeadAssessor, Admin")]
         public async Task<IActionResult> Recommendations(int id)
@@ -449,35 +452,35 @@ public async Task<IActionResult> View(int id)
 
         // -------------------- 6. GET REVIEW --------------------
 
-       [Authorize(Roles = "LeadAssessor, Admin")]
-public async Task<IActionResult> Review(int id)
-{
-    var assessment = await _db.Assessments
-        .Include(a => a.Candidate)
-        .Include(a => a.Assessor)
-        .FirstOrDefaultAsync(a => a.Id == id);
+        [Authorize(Roles = "LeadAssessor, Admin")]
+        public async Task<IActionResult> Review(int id)
+        {
+            var assessment = await _db.Assessments
+                .Include(a => a.Candidate)
+                .Include(a => a.Assessor)
+                .FirstOrDefaultAsync(a => a.Id == id);
 
-    if (assessment == null)
-        return NotFound();
+            if (assessment == null)
+                return NotFound();
 
-    var answers = string.IsNullOrWhiteSpace(assessment.AssessmentResultJson)
-        ? new Dictionary<string, string>()
-        : JsonSerializer.Deserialize<Dictionary<string, string>>(assessment.AssessmentResultJson)!;
+            var answers = string.IsNullOrWhiteSpace(assessment.AssessmentResultJson)
+                ? new Dictionary<string, string>()
+                : JsonSerializer.Deserialize<Dictionary<string, string>>(assessment.AssessmentResultJson)!;
 
-    ViewBag.Answers = answers;
-    ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS", "");
+            ViewBag.Answers = answers;
+            ViewBag.Summary = answers.GetValueOrDefault("SUMMARY_COMMENTS", "");
 
-    var qfile = Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json");
-    ViewBag.Sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
-        System.IO.File.ReadAllText(qfile)
-    ) ?? new List<AssessmentSection>();
+            var qfile = Path.Combine(_environment.WebRootPath, "data", "assessment_questions.json");
+            ViewBag.Sections = JsonSerializer.Deserialize<List<AssessmentSection>>(
+                System.IO.File.ReadAllText(qfile)
+            ) ?? new List<AssessmentSection>();
 
-    ViewBag.Assessors = await _db.Users
-        .Where(u => u.Location == assessment.Candidate.CommunicationAddress)
-        .ToListAsync();
+            ViewBag.Assessors = await _db.Users
+                .Where(u => u.Location == assessment.Candidate.CommunicationAddress)
+                .ToListAsync();
 
-    return View(assessment);
-}
+            return View(assessment);
+        }
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> ExportReportPdf(int id)
@@ -647,6 +650,7 @@ public async Task<IActionResult> Review(int id)
         }
     }
 }
+
 
 
 
