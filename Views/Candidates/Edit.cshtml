@@ -205,31 +205,36 @@
         <div class="card-body d-flex flex-wrap gap-3">
 
             @foreach (var doc in (List<CandidateAttachment>)ViewBag.Attachments)
-            {
-                <div class="border p-2 text-center" style="width:120px;">
-                    @if (doc.FileType.StartsWith("image"))
-                    {
-                        <img src="/uploads/candidates/@doc.FilePath"
-                             style="width:80px;height:80px;object-fit:cover;border-radius:5px;" />
-                    }
-                    else if (doc.FileType.Contains("pdf"))
-                    {
-                        <img src="/images/pdf-icon.png" style="height:50px;" />
-                    }
-                    else
-                    {
-                        <img src="/images/doc-icon.png" style="height:50px;" />
-                    }
+{
+    <div class="border p-2 text-center" style="width:120px;">
 
-                    <div class="small">@doc.FileName</div>
+        @if (doc.FileType.StartsWith("image"))
+        {
+            <img src="@doc.FilePath"
+                 style="width:80px;height:80px;object-fit:cover;border-radius:5px;" />
+        }
+        else if (doc.FileType.Contains("pdf"))
+        {
+            <a href="@doc.FilePath" target="_blank">
+                <img src="/images/pdf-icon.png" style="height:50px;" />
+            </a>
+        }
+        else
+        {
+            <a href="@doc.FilePath" target="_blank">
+                <img src="/images/doc-icon.png" style="height:50px;" />
+            </a>
+        }
 
-                    <form asp-action="DeleteAttachment" method="post"
-                          asp-route-id="@doc.Id"
-                          onsubmit="return confirm('Delete this file?');">
-                        <button class="btn btn-sm btn-danger mt-1">X</button>
-                    </form>
-                </div>
-            }
+        <div class="small mt-1">@doc.FileName</div>
+
+        <form asp-action="DeleteAttachment" method="post"
+              asp-route-id="@doc.Id"
+              onsubmit="return confirm('Delete this file?');">
+            <button class="btn btn-sm btn-danger mt-1">X</button>
+        </form>
+    </div>
+}
 
         </div>
     </div>
@@ -331,3 +336,4 @@
 
     @await Html.PartialAsync("_ValidationScriptsPartial")
 }
+
