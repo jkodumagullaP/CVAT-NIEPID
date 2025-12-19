@@ -236,32 +236,29 @@
 
 
     <!-- ADD NEW DOCUMENTS -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white fw-bold">
-            Add More Documents
-        </div>
-
-        <div class="card-body">
-
-            <div class="row g-3 mb-3">
-                <div class="col-md-8">
-                    <input type="file" id="docPicker" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                           class="form-control" />
-                </div>
-
-                <div class="col-md-4">
-                    <button type="button" class="btn btn-secondary w-100"
-                            onclick="addDocument()">
-                        ➕ Add Document
-                    </button>
-                </div>
-            </div>
-
-            <div id="documentsPreview" class="d-flex flex-wrap gap-3"></div>
-
-            <input type="hidden" id="docIndex" value="0" />
-        </div>
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold">
+        Add More Documents
     </div>
+
+    <div class="card-body">
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <input type="file"
+                       id="docPicker"
+                       name="AttachmentFiles"
+                       multiple
+                       accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                       class="form-control"
+                       onchange="previewDocuments()" />
+            </div>
+        </div>
+
+        <div id="documentsPreview" class="d-flex flex-wrap gap-3"></div>
+
+    </div>
+</div>
 
 
     <button type="submit" class="btn btn-success px-4">Save Changes</button>
@@ -270,64 +267,52 @@
 </form>
 
 @section Scripts {
-    <script>
+@section Scripts {
+<script>
 
-        // PHOTO PREVIEW
-        function previewPhoto(e) {
-            document.getElementById("photoPreview").src =
-                URL.createObjectURL(e.target.files[0]);
-        }
+    // PHOTO PREVIEW
+    function previewPhoto(e) {
+        document.getElementById("photoPreview").src =
+            URL.createObjectURL(e.target.files[0]);
+    }
 
-        // ADD DOCUMENT
-        function addDocument() {
-            let picker = document.getElementById("docPicker");
-            if (picker.files.length === 0) return;
+    // DOCUMENT PREVIEW (NO FILE MANIPULATION)
+    function previewDocuments() {
+        let picker = document.getElementById("docPicker");
+        let container = document.getElementById("documentsPreview");
+        container.innerHTML = "";
 
-            let file = picker.files[0];
+        Array.from(picker.files).forEach(file => {
             let url = URL.createObjectURL(file);
 
-            let index = parseInt(document.getElementById("docIndex").value);
-
-            // Hidden input to store file
-            let input = document.createElement("input");
-            input.type = "file";
-            input.name = "AttachmentFiles";
-            input.hidden = true;
-            input.files = picker.files;
-
             let box = document.createElement("div");
-            box.id = "doc_" + index;
             box.className = "border p-2 text-center";
             box.style.width = "120px";
 
-            let remove =
-                `<button class='btn btn-sm btn-danger mt-1' onclick='removeDocument(${index})'>X</button>`;
-
             if (file.type.startsWith("image")) {
-                box.innerHTML = `<img src='${url}'
-                                 style='width:80px;height:80px;object-fit:cover;border-radius:5px;' />
-                                 <div class='small mt-1'>${file.name}</div>${remove}`;
-            } else if (file.type.includes("pdf")) {
-                box.innerHTML = `<img src='/images/pdf-icon.png' style='height:50px;' />
-                                 <div class='small mt-1'>${file.name}</div>${remove}`;
-            } else {
-                box.innerHTML = `<img src='/images/doc-icon.png' style='height:50px;' />
-                                 <div class='small mt-1'>${file.name}</div>${remove}`;
+                box.innerHTML = `
+                    <img src="${url}"
+                         style="width:80px;height:80px;object-fit:cover;border-radius:5px;" />
+                    <div class="small mt-1">${file.name}</div>`;
+            }
+            else if (file.type.includes("pdf")) {
+                box.innerHTML = `
+                    <img src="/images/pdf-icon.png" style="height:50px;" />
+                    <div class="small mt-1">${file.name}</div>`;
+            }
+            else {
+                box.innerHTML = `
+                    <img src="/images/doc-icon.png" style="height:50px;" />
+                    <div class="small mt-1">${file.name}</div>`;
             }
 
-            box.appendChild(input);
+            container.appendChild(box);
+        });
+    }
 
-            document.getElementById("documentsPreview").appendChild(box);
+</script>
 
-            document.getElementById("docIndex").value = index + 1;
-            picker.value = "";
-        }
-
-        function removeDocument(i) {
-            document.getElementById("doc_" + i).remove();
-        }
-
-    </script>
-
-    @await Html.PartialAsync("_ValidationScriptsPartial")
+@await Html.PartialAsync("_ValidationScriptsPartial")
 }
+
+
