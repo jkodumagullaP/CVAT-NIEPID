@@ -13,11 +13,10 @@ QuestPDF.Settings.License = LicenseType.Community;
 // EPPlus (Excel)
 ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
+
 // DB
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        o => o.EnableRetryOnFailure()));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -44,30 +43,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-
-// 🔥 FIX STARTS HERE
+// Seed roles and users
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-
-    var context = services.GetRequiredService<ApplicationDbContext>();
-
-    // ✅ This creates database tables if they don't exist
-    context.Database.Migrate();
-
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
-    // ✅ Now safe to seed
     await SeedData.InitializeAsync(userManager, roleManager);
-}
-// 🔥 FIX ENDS HERE
-
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
@@ -83,3 +65,8 @@ app.MapControllerRoute(
 );
 
 app.Run();
+
+if (app.Environment.IsProduction())
+{
+    app.UseDeveloperExceptionPage();
+}
