@@ -7,18 +7,28 @@ using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// QuestPDF
+// -----------------------------
+// QuestPDF License
+// -----------------------------
 QuestPDF.Settings.License = LicenseType.Community;
 
-// EPPlus (Excel)
-ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+// -----------------------------
+// EPPlus License
+// -----------------------------
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-
-// DB
+// -----------------------------
+// Database Configuration
+// -----------------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.EnableRetryOnFailure()
+    ));
 
-// Identity
+// -----------------------------
+// Identity Configuration
+// -----------------------------
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -30,10 +40,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// -----------------------------
+// MVC + Razor
+// -----------------------------
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
 
-// Cookies
+// -----------------------------
+// Cookie Settings
+// -----------------------------
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -43,21 +58,49 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-// Seed roles and users
+
+// =======================================================
+// 🔥 DATABASE MIGRATION + SEEDING (CRITICAL PART)
+// =======================================================
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<ApplicationDbContext>();
+
+    // ✅ Ensure database & tables are created
+    context.Database.Migrate();
+
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    // ✅ Seed roles & default admin
     await SeedData.InitializeAsync(userManager, roleManager);
 }
+// =======================================================
 
+
+// -----------------------------
+// Production Settings
+// -----------------------------
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+// -----------------------------
+// Middleware Pipeline
+// -----------------------------
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// -----------------------------
+// Routing
+// -----------------------------
 app.MapRazorPages();
 app.MapControllerRoute(
     name: "default",
@@ -65,8 +108,3 @@ app.MapControllerRoute(
 );
 
 app.Run();
-
-if (app.Environment.IsProduction())
-{
-    app.UseDeveloperExceptionPage();
-}
