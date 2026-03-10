@@ -1,213 +1,33 @@
-using CAT.AID.Models.DTO;
-using CAT.AID.Web.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using CAT.AID.Models;
 
-namespace CAT.AID.Web.Controllers
+namespace CAT.AID.Controllers
 {
-    [Authorize(Roles = "Admin")]
-    public class AdminController : Controller
+public class AdminController : Controller
+{
+private readonly AppDbContext _context;
+
+```
+    public AdminController(AppDbContext context)
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-
-        public AdminController(
-            UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
-        {
-            _userManager = userManager;
-            _roleManager = roleManager;
-        }
-
-        // --------------------------------------------------------
-        // USERS LIST
-        // --------------------------------------------------------
-        public IActionResult Users()
-        {
-            return View(_userManager.Users.ToList());
-        }
-
-        // --------------------------------------------------------
-        // CREATE USER
-        // --------------------------------------------------------
-        [HttpGet]
-        public IActionResult Create()
-        {
-            ViewBag.Roles = _roleManager.Roles.Select(r => r.Name).ToList();
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ApplicationUser model, string password, string role)
-        {
-            ViewBag.Roles = _roleManager.Roles.Select(r => r.Name).ToList();
-
-            if (!ModelState.IsValid)
-                return View(model);
-
-            model.UserName = model.Email;
-
-            var result = await _userManager.CreateAsync(model, password);
-            if (!result.Succeeded)
-            {
-                foreach (var err in result.Errors)
-                    ModelState.AddModelError("", err.Description);
-
-                return View(model);
-            }
-
-            if (!string.IsNullOrWhiteSpace(role) && await _roleManager.RoleExistsAsync(role))
-            {
-                await _userManager.AddToRoleAsync(model, role);
-            }
-
-            TempData["msg"] = "User created successfully!";
-            return RedirectToAction(nameof(Users));
-        }
-
-        // --------------------------------------------------------
-        // EDIT USER
-        // --------------------------------------------------------
-        [HttpGet]
-        public async Task<IActionResult> Edit(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            ViewBag.Roles = _roleManager.Roles.Select(r => r.Name).ToList();
-            ViewBag.Role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-
-            return View(user);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(ApplicationUser model, string role)
-        {
-            var user = await _userManager.FindByIdAsync(model.Id);
-            if (user == null)
-                return NotFound();
-
-            user.FullName = model.FullName;
-            user.Email = model.Email;
-            user.UserName = model.Email;
-            user.Location = model.Location;
-
-            var update = await _userManager.UpdateAsync(user);
-            if (!update.Succeeded)
-            {
-                foreach (var err in update.Errors)
-                    ModelState.AddModelError("", err.Description);
-
-                ViewBag.Roles = _roleManager.Roles.Select(r => r.Name).ToList();
-                return View(model);
-            }
-
-            var existingRoles = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, existingRoles);
-
-            if (!string.IsNullOrWhiteSpace(role) && await _roleManager.RoleExistsAsync(role))
-            {
-                await _userManager.AddToRoleAsync(user, role);
-            }
-
-            TempData["msg"] = "User updated successfully!";
-            return RedirectToAction(nameof(Users));
-        }
-
-        // --------------------------------------------------------
-        // RESET PASSWORD
-        // --------------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResetPassword(string id, string newPassword)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
-
-            TempData["msg"] = result.Succeeded
-                ? "Password reset successfully!"
-                : string.Join(", ", result.Errors.Select(e => e.Description));
-
-            return RedirectToAction(nameof(Edit), new { id });
-        }
-
-        // --------------------------------------------------------
-        // DELETE USER
-        // --------------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            var currentUserId = _userManager.GetUserId(User);
-            if (user.Id == currentUserId)
-            {
-                TempData["msg"] = "You cannot delete your own account!";
-                return RedirectToAction(nameof(Users));
-            }
-
-            var roles = await _userManager.GetRolesAsync(user);
-            if (roles.Contains("Admin"))
-            {
-                TempData["msg"] = "Admin user cannot be deleted!";
-                return RedirectToAction(nameof(Users));
-            }
-
-            await _userManager.DeleteAsync(user);
-
-            TempData["msg"] = "User deleted successfully!";
-            return RedirectToAction(nameof(Users));
-        }
-
-        // --------------------------------------------------------
-        // LOCK / UNLOCK
-        // --------------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Lock(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            var roles = await _userManager.GetRolesAsync(user);
-            if (roles.Contains("Admin"))
-            {
-                TempData["msg"] = "Admins cannot be locked!";
-                return RedirectToAction(nameof(Users));
-            }
-
-            user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(50);
-            await _userManager.UpdateAsync(user);
-
-            TempData["msg"] = "User locked!";
-            return RedirectToAction(nameof(Users));
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Unlock(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            user.LockoutEnd = null;
-            await _userManager.UpdateAsync(user);
-
-            TempData["msg"] = "User unlocked!";
-            return RedirectToAction(nameof(Users));
-        }
+        _context = context;
     }
+
+    public IActionResult Dashboard()
+    {
+        var model = new DashboardViewModel();
+
+        model.TotalCandidates = _context.Candidates.Count();
+        model.TotalAssessments = _context.Assessments.Count();
+
+        model.RecentAssessments = _context.Assessments
+            .OrderByDescending(a => a.Id)
+            .Take(10)
+            .ToList();
+
+        return View(model);
+    }
+}
+```
+
 }
