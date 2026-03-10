@@ -1,110 +1,65 @@
-using CAT.AID.Web.Data;
-using CAT.AID.Web.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;
-using QuestPDF.Infrastructure;
+using CVAT_NIEPID.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -----------------------------
-// QuestPDF License
-// -----------------------------
-QuestPDF.Settings.License = LicenseType.Community;
 
-// -----------------------------
-// EPPlus License
-// -----------------------------
-ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+// Add services to the container
 
-// -----------------------------
-// Database Configuration
-// -----------------------------
+builder.Services.AddControllersWithViews();   // MVC Web
+builder.Services.AddControllers();            // API Controllers
+
+
+// Database Connection (PostgreSQL)
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        o => o.EnableRetryOnFailure()
-    ));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// -----------------------------
-// Identity Configuration
-// -----------------------------
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+
+// Enable CORS for Mobile App
+
+builder.Services.AddCors(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
-
-// -----------------------------
-// MVC + Razor
-// -----------------------------
-builder.Services.AddRazorPages();
-builder.Services.AddControllersWithViews();
-
-// -----------------------------
-// Cookie Settings
-// -----------------------------
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
 });
+
 
 var app = builder.Build();
 
 
-// =======================================================
-// 🔥 DATABASE MIGRATION + SEEDING (CRITICAL PART)
-// =======================================================
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
+// Configure the HTTP request pipeline
 
-    var context = services.GetRequiredService<ApplicationDbContext>();
-
-    // ✅ Ensure database & tables are created
-    context.Database.Migrate();
-
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
-    // ✅ Seed roles & default admin
-    await SeedData.InitializeAsync(userManager, roleManager);
-}
-// =======================================================
-
-
-// -----------------------------
-// Production Settings
-// -----------------------------
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-// -----------------------------
-// Middleware Pipeline
-// -----------------------------
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
-app.UseAuthentication();
+
+app.UseCors("AllowAll");
+
 app.UseAuthorization();
 
-// -----------------------------
-// Routing
-// -----------------------------
-app.MapRazorPages();
+
+// API Routes
+
+app.MapControllers();
+
+
+// MVC Routes
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}"
-);
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();
