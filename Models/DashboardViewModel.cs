@@ -1,9 +1,11 @@
-﻿namespace CAT.AID.Web.Models
+using CAT.AID.Models;
+
+public class DashboardViewModel
 {
-    public class DashboardViewModel
-    {
-        public int MyPendingAssessments { get; set; }
-        public int PendingReviews { get; set; }
-        public int TotalUsers { get; set; }
-    }
+public int TotalCandidates { get; set; }
+
+public int TotalAssessments { get; set; }
+
+public List<Assessment> RecentAssessments { get; set; }
+
 }
