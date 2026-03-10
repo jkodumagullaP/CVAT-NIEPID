@@ -1,0 +1,118 @@
+@model DashboardViewModel
+
+<h2 class="mb-4">📊 CVAT Admin Dashboard</h2>
+
+<div class="row">
+
+<div class="col-md-4">
+
+<div class="card text-center shadow">
+<div class="card-body">
+<h4>Total Candidates</h4>
+<h2>@Model.TotalCandidates</h2>
+</div>
+</div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="card text-center shadow">
+<div class="card-body">
+<h4>Total Assessments</h4>
+<h2>@Model.TotalAssessments</h2>
+</div>
+</div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="card text-center shadow">
+<div class="card-body">
+<h4>System Status</h4>
+<h2 class="text-success">Active</h2>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<hr />
+
+<h4 class="mt-4">Assessment Activity</h4>
+
+<canvas id="assessmentChart"></canvas>
+
+<hr />
+
+<h4 class="mt-4">Recent Assessments</h4>
+
+<table class="table table-striped">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Candidate</th>
+<th>Date</th>
+</tr>
+</thead>
+
+<tbody>
+
+@foreach(var a in Model.RecentAssessments)
+{
+
+<tr>
+<td>@a.Id</td>
+<td>@a.Candidate.FullName</td>
+<td>@a.CreatedAt</td>
+</tr>
+}
+
+</tbody>
+
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const ctx = document.getElementById('assessmentChart');
+
+new Chart(ctx, {
+
+type: 'bar',
+
+data: {
+
+labels: ['Candidates','Assessments'],
+
+datasets: [{
+
+label: 'System Statistics',
+
+data: [
+
+@Model.TotalCandidates,
+
+@Model.TotalAssessments
+
+],
+
+backgroundColor: [
+
+'#003366',
+
+'#ffd84d'
+
+]
+
+}]
+
+}
+
+});
+
+</script>
