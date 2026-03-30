@@ -1,97 +1,369 @@
-﻿@model LoginVM
+@model LoginVM
 @{
     ViewData["Title"] = "Login";
     Layout = null;
 }
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+<!DOCTYPE html>
 
-<style>
-    body {
-        font-family: 'Segoe UI', sans-serif;
-        background: linear-gradient(90deg, #999, #000);
-        height: 100vh;
-        overflow: hidden;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+<html>
 
+<head>
 
-    .login-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 40px;
-    }
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>CVAT Login</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&family=Baloo+2:wght@500;600&display=swap"
+          rel="stylesheet">
 
 
-    /* 🔥 image fits laptop resolution */
-    /* 🔥 image fits 100% of laptop/mobile height without scrolling */
-    .promo-image {
-        height: 88vh;
-        width: auto;
-        object-fit: contain;
-        border-radius: 8px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.25);
-    }
+    <style>
 
-    .login-card {
-        width: 340px;
-        background: white;
-        border-radius: 12px;
-        padding: 28px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.28);
-    }
+        /* PAGE */
 
-        .login-card h4 {
-            font-weight: 700;
-            color: #002147;
-            margin-bottom: 18px;
+        body {
+            margin: 0;
+            font-family: 'Poppins',sans-serif;
+            background: linear-gradient(120deg,#0b3d91 0%,#2f5597 40%,#8b6a3f 75%,#6b4f2a 100%);
+            height: 100vh;
+            overflow: hidden;
         }
 
-    .btn-login {
-        background: #002147;
-        color: white;
-        font-weight: 550;
-        border-radius: 6px;
-        height: 45px;
-        font-size: 16px;
-    }
-</style>
 
-<div class="login-container">
-    <img src="~/Images/nimhnew.png" class="promo-image" />
+        /* HEADER */
 
-    <div class="login-card">
-        <h4>🔒 Login to CVAT Portal</h4>
-        <form asp-controller="Account" asp-action="Login" method="post">
-            @Html.AntiForgeryToken()
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Email</label>
-                <input asp-for="Email" class="form-control" placeholder="Enter email" />
-                <span asp-validation-for="Email" class="text-primary fw-bold small"></span>
+        .brand-header {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            background: rgba(255,255,255,.96);
+            padding: 12px 0;
+            z-index: 5;
+            box-shadow: 0 8px 30px rgba(0,0,0,.25);
+        }
+
+        .brand-title {
+            font-weight: 700;
+            font-size: 20px;
+            color: #1e293b;
+        }
+
+        .brand-sub {
+            font-size: 12px;
+            color: #475569;
+        }
+
+        .header-logo {
+            transition: .3s;
+        }
+
+            .header-logo:hover {
+                transform: scale(1.05);
+            }
+
+
+        /* MAIN LAYOUT */
+
+        .main-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            height: 100%;
+            padding-top: 95px;
+            z-index: 2;
+            position: relative;
+        }
+
+
+        /* POSTER IMAGE */
+
+        .poster-img {
+            max-height: 85vh;
+            max-width: 55vw;
+            border-radius: 16px;
+            box-shadow: 0 25px 60px rgba(0,0,0,.35);
+        }
+
+
+        /* LOGIN BOX */
+
+        .login-box {
+            width: 320px;
+            padding: 24px;
+            background: rgba(255,255,255,.96);
+            border-radius: 16px;
+            box-shadow: 0 18px 40px rgba(0,0,0,.35);
+            border-top: 6px solid #1f5fbf;
+        }
+
+
+        .btn-login {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            background: #1f5fbf;
+            color: white;
+        }
+
+
+            .btn-login:hover {
+                background: #174a96;
+            }
+
+
+        /* FLOATING QUOTES */
+
+        .quote {
+            position: absolute;
+            font-family: 'Baloo 2',cursive;
+            color: rgba(255,255,255,.85);
+            font-size: 17px;
+            font-weight: 600;
+            max-width: 260px;
+            text-shadow: 1px 1px 4px rgba(0,0,0,.3);
+            animation: float 20s infinite ease-in-out;
+        }
+
+
+        @@keyframes float {
+
+            0% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-18px)
+            }
+
+            100% {
+                transform: translateY(0)
+            }
+        }
+
+
+        /* QUOTE POSITIONS */
+
+        .q1 {
+            top: 12%;
+            left: 5%;
+        }
+
+        .q2 {
+            top: 30%;
+            left: 3%;
+        }
+
+        .q3 {
+            top: 12%;
+            right: 6%;
+        }
+
+        .q4 {
+            top: 45%;
+            right: 4%;
+        }
+
+        .q5 {
+            bottom: 12%;
+            left: 6%;
+        }
+
+        .q6 {
+            bottom: 6%;
+            right: 8%;
+        }
+
+        .q7 {
+            top: 65%;
+            left: 3%;
+        }
+
+        .q8 {
+            top: 75%;
+            right: 20%;
+        }
+
+        .q9 {
+            bottom: 35%;
+            right: 3%;
+        }
+
+        .q10 {
+            bottom: 45%;
+            left: 15%;
+        }
+
+
+        /* MOBILE */
+
+        @@media(max-width:900px) {
+
+            .quote {
+                display: none;
+            }
+
+            .main-container {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            .poster-img {
+                max-width: 100%;
+                max-height: none;
+            }
+
+            .login-box {
+                width: 100%;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+
+<body>
+
+
+    <!-- HEADER -->
+
+    <div class="brand-header">
+
+        <div class="container d-flex align-items-center justify-content-between">
+
+            <img src="/Images/20240912282747915.png"
+                 height="60"
+                 class="header-logo" />
+
+
+            <div class="text-center">
+
+                <div class="brand-title">
+
+                    CVAT – Comprehensive Vocational Assessment Tool
+
+                </div>
+
+                <div class="brand-sub">
+
+                    Vocational Evaluation • Skill Assessment • Career Planning
+
+                </div>
+
             </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Password</label>
-                <input asp-for="Password" class="form-control" placeholder="Enter password" type="password" />
-                <span asp-validation-for="Password" class="text-primary fw-bold small"></span>
-            </div>
-            <div class="form-check mb-3">
-                <input asp-for="RememberMe" class="form-check-input" />
-                <label class="form-check-label">Remember me</label>
-            </div>
-            <button type="submit" class="btn btn-login w-100">Login</button>
-            <div class="small text-center mt-3 text-light">
-                Trouble logging in? <a href="/Account/ForgotPassword" class="text-warning">Reset Password</a>
-            </div>
-        </form>
+
+
+            <img src="/Images/202409121913074416.png"
+                 height="60"
+                 class="header-logo" />
+
+        </div>
+
     </div>
-</div>
 
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
 
+    <!-- FLOATING QUOTES -->
+
+    <div class="quote q1">Focus on ability.</div>
+    <div class="quote q2">Skills create independence.</div>
+    <div class="quote q3">Your potential is powerful.</div>
+    <div class="quote q4">Every step is progress.</div>
+    <div class="quote q5">Ability shines brighter.</div>
+    <div class="quote q6">Confidence grows with skills.</div>
+    <div class="quote q7">Opportunities create success.</div>
+    <div class="quote q8">Believe in your strengths.</div>
+    <div class="quote q9">Talent has no limits.</div>
+    <div class="quote q10">Growth begins today.</div>
+
+
+
+    <!-- MAIN CONTENT -->
+
+    <div class="main-container">
+
+        <img src="~/Images/nimhnew.png"
+             class="poster-img" />
+
+
+        <div class="login-box">
+
+            <h5 class="text-center text-primary mb-3">
+
+                Login
+
+            </h5>
+
+
+            <form asp-controller="Account"
+                  asp-action="Login"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+
+                <input asp-for="Email"
+                       class="form-control mb-3"
+                       placeholder="Email" />
+
+
+                <input asp-for="Password"
+                       type="password"
+                       class="form-control mb-3"
+                       placeholder="Password" />
+
+
+                <div class="form-check mb-3">
+
+                    <input asp-for="RememberMe"
+                           class="form-check-input" />
+
+                    <label class="form-check-label">
+
+                        Remember me
+
+                    </label>
+
+                </div>
+
+
+                <button class="btn btn-login">
+
+                    Login
+
+                </button>
+
+
+                <div class="text-center mt-2">
+
+                    <a href="/Account/ForgotPassword"
+                       class="text-decoration-none">
+
+                        Forgot password?
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
