@@ -9,7 +9,7 @@ var recommendations = ViewBag.Recommendations as Dictionary<string, List<string>
 var weakDetails = ViewBag.WeakDetails as Dictionary<string, List<string>>;
 var sections = ViewBag.Sections as List<AssessmentSection>;
 
-```
+
 var saved = string.IsNullOrWhiteSpace(Model.AssessmentResultJson)
     ? new Dictionary<string,string>()
     : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string,string>>(Model.AssessmentResultJson);
@@ -19,7 +19,7 @@ var score = string.IsNullOrWhiteSpace(Model.ScoreJson)
     : System.Text.Json.JsonSerializer.Deserialize<AssessmentScoreDTO>(Model.ScoreJson);
 
 var candidate = Model.Candidate;
-```
+
 
 }
 
@@ -240,10 +240,10 @@ else
 
 <!-- SECTION COMMENT -->
 
-@{
+
 string sectionCommentKey = $"SECTION_COMMENT_{sec.Id}";
 saved.TryGetValue(sectionCommentKey,out string secComment);
-}
+
 
 @if(!string.IsNullOrEmpty(secComment))
 {
