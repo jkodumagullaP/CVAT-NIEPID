@@ -94,14 +94,17 @@ namespace CAT.AID.Web.Controllers
             return View(grouped);
         }
 
-        [Authorize(Roles = "LeadAssessor, Admin")]
-        [HttpGet]
-        public async Task<IActionResult> Compare(int candidateId, int[] ids)
+        [Authorize(Roles = "Assessor,LeadAssessor,Admin")]
+        public async Task<IActionResult> Compare(
+             int candidateId,
+             int[] ids)
         {
-            if (ids == null || ids.Length < 2)
-                return BadRequest("At least two assessments must be selected.");
+            if (ids.Length < 2)
+                return BadRequest(
+                    "Select at least 2 assessments");
 
-            var assessments = await _db.Assessments
+            var assessments =
+                await _db.Assessments
                 .Include(a => a.Candidate)
                 .Where(a => ids.Contains(a.Id))
                 .OrderBy(a => a.CreatedAt)
@@ -110,15 +113,22 @@ namespace CAT.AID.Web.Controllers
             if (!assessments.Any())
                 return NotFound();
 
-            // Deserialize stored score JSON
-            var scoreData = assessments
-                .ToDictionary(a => a.Id, a =>
-                    string.IsNullOrWhiteSpace(a.ScoreJson)
-                    ? new AssessmentScoreDTO()
-                    : System.Text.Json.JsonSerializer.Deserialize<AssessmentScoreDTO>(a.ScoreJson));
+            var scoreData =
+                assessments.ToDictionary(
+                    a => a.Id,
+                    a => string.IsNullOrWhiteSpace(
+                        a.ScoreJson)
+                        ? new AssessmentScoreDTO()
+                        : JsonSerializer.Deserialize<
+                            AssessmentScoreDTO>(
+                                a.ScoreJson)!);
 
             ViewBag.Assessments = assessments;
-            return View("CompareAssessments", scoreData);
+            ViewBag.AssessmentIds = ids;
+
+            return View(
+                "CompareAssessments",
+                scoreData);
         }
 
         // -------------------- 2. GET PERFORM ASSESSMENT --------------------
