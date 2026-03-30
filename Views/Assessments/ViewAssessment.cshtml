@@ -10,7 +10,7 @@ var recommendations = ViewBag.Recommendations as Dictionary<string, List<string>
 var weakDetails = ViewBag.WeakDetails as Dictionary<string, List<string>>;
 var sections = ViewBag.Sections as List<AssessmentSection>;
 
-```
+
 var saved = string.IsNullOrWhiteSpace(Model.AssessmentResultJson)
     ? new Dictionary<string, string>()
     : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.AssessmentResultJson);
@@ -22,7 +22,7 @@ var score = string.IsNullOrWhiteSpace(Model.ScoreJson)
 var candidate = Model.Candidate;
 
 var attachments = ViewBag.Attachments as List<CandidateAttachment> ?? new List<CandidateAttachment>();
-```
+
 
 }
 
@@ -35,7 +35,7 @@ double iqPercent = score.MaxScore > 0
 ? Math.Round(((double)score.TotalScore / score.MaxScore) * 100, 2)
 : 0;
 
-```
+
 string iqLevel = iqPercent >= 80 ? "Highly Developed"
                 : iqPercent >= 60 ? "Above Average"
                 : iqPercent >= 40 ? "Average"
@@ -45,7 +45,7 @@ string iqColor = iqPercent >= 80 ? "#007A33"
                : iqPercent >= 60 ? "#003366"
                : iqPercent >= 40 ? "#FFA500"
                : "#50308A";
-```
+
 
 }
 
@@ -265,10 +265,10 @@ else
 
 </table>
 
-@{
+
 string sectionCommentKey = $"SECTION_COMMENT_{sec.Id}";
 saved.TryGetValue(sectionCommentKey,out string sectionComment);
-}
+
 
 @if(!string.IsNullOrEmpty(sectionComment))
 {
