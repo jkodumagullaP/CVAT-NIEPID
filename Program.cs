@@ -1,23 +1,57 @@
 using Microsoft.EntityFrameworkCore;
-using CVAT_NIEPID.Data;
+using Microsoft.AspNetCore.Identity;
+using QuestPDF.Infrastructure;
+
+using CAT.AID.Web.Data;
+using CAT.AID.Web.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
-// Add services to the container
+// --------------------
+// QuestPDF License
+// --------------------
 
-builder.Services.AddControllersWithViews();   // MVC Web
-builder.Services.AddControllers();            // API Controllers
+QuestPDF.Settings.License = LicenseType.Community;
 
 
-// Database Connection (PostgreSQL)
+// --------------------
+// SERVICES
+// --------------------
 
+// MVC + API
+builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
+
+
+// PostgreSQL connection
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
-// Enable CORS for Mobile App
+// Identity
+builder.Services
+.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
+
+// cookie settings
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/Login";
+});
+
+
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -33,7 +67,9 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 
-// Configure the HTTP request pipeline
+// --------------------
+// PIPELINE
+// --------------------
 
 if (!app.Environment.IsDevelopment())
 {
@@ -42,24 +78,44 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseCors("AllowAll");
 
+app.UseAuthentication();
+
 app.UseAuthorization();
 
 
-// API Routes
+// --------------------
+// ROUTES
+// --------------------
 
+// API controllers
 app.MapControllers();
 
 
-// MVC Routes
+// Dashboard direct URL
+app.MapControllerRoute(
+    name: "dashboard",
+    pattern: "Dashboard",
+    defaults: new { controller = "Dashboard", action = "Index" });
 
+
+// Candidates direct URL
+app.MapControllerRoute(
+    name: "candidates",
+    pattern: "Candidates",
+    defaults: new { controller = "Candidates", action = "Index" });
+
+
+// Default route → Login page
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");
+
 
 app.Run();
