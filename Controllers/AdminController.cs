@@ -5,10 +5,10 @@ namespace CAT.AID.Controllers
 {
 public class AdminController : Controller
 {
-private readonly AppDbContext _context;
+private readonly ApplicationDbContext _context;
 
-```
-    public AdminController(AppDbContext context)
+
+    public AdminController(ApplicationDbContext context)
     {
         _context = context;
     }
@@ -28,6 +28,6 @@ private readonly AppDbContext _context;
         return View(model);
     }
 }
-```
+
 
 }
