@@ -126,13 +126,14 @@ namespace CAT.AID.Web.Controllers
         // EDIT (POST)
         // ---------------------------------------------------------
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int id,
-            Candidate model,
-            IFormFile? PhotoFile,
-            List<IFormFile>? AttachmentFiles)
-        {
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Edit(
+    int id,
+    Candidate model,
+    IFormFile? PhotoFile,
+    List<IFormFile>? AttachmentFiles)
+{
+
             var dbModel = await _db.Candidates.FindAsync(id);
             if (dbModel == null) return NotFound();
 
@@ -199,8 +200,8 @@ namespace CAT.AID.Web.Controllers
             await _db.SaveChangesAsync();
 
             // NEW ATTACHMENTS
-            if (AttachmentFiles != null)
-                await SaveAttachments(id, AttachmentFiles);
+           if (AttachmentFiles != null && AttachmentFiles.Any())
+        await SaveAttachments(id, AttachmentFiles);
 
             TempData["msg"] = "Candidate updated successfully.";
             return RedirectToAction(nameof(Edit), new { id });
@@ -368,4 +369,5 @@ namespace CAT.AID.Web.Controllers
         }
     }
 }
+
 
